@@ -27,23 +27,24 @@ object RabbitMqTopologyAlg {
   private def redactPasswordFields(j: Json): Json =
     j.fold(j, Json.fromBoolean, Json.fromJsonNumber, Json.fromString, a => Json.fromValues(a.map(redactPasswordFields)), redactPasswordFields)
 
-  def resource[F[_] : ConcurrentEffect : Timer : ContextShift](baseUri: Uri): Resource[F, RabbitMqTopologyAlg[F]] =
+  def resource[F[_] : ConcurrentEffect](baseUri: Uri, username: Username, password: Password): Resource[F, RabbitMqTopologyAlg[F]] =
     for {
       b <- Blocker[F]
       httpClient <- BlazeClientBuilder[F](b.blockingContext).resource.map(client.middleware.Logger[F](logHeaders = true, logBody = true))
     } yield new RabbitMqTopologyAlg[F] with Http4sClientDsl[F] {
       private val definitionsUri = baseUri / "api" / "definitions"
+      private val authorizationHeader = Authorization(BasicCredentials(username, password))
 
       override def retrieveTopology: F[RabbitMqTopology] =
         for {
-          req <- GET(definitionsUri, Authorization(BasicCredentials("guest", "guest")))
+          req <- GET(definitionsUri, authorizationHeader)
           res <- httpClient.expect[Json](req).map(redactPasswordFields)
           topology <- res.as[RabbitMqTopology].liftTo[F]
         } yield topology
 
       override def putTopology(rabbitMqTopology: RabbitMqTopology): F[Unit] =
         for {
-          req <- POST(rabbitMqTopology, definitionsUri, Authorization(BasicCredentials("guest", "guest")))
+          req <- POST(rabbitMqTopology, definitionsUri, authorizationHeader)
           res <- httpClient.expect[Unit](req)
         } yield res
     }

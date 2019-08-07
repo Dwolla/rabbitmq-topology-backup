@@ -5,6 +5,7 @@ lazy val buildSettings = Seq(
   licenses += ("MIT", url("http://opensource.org/licenses/MIT")),
   startYear := Option(2019),
   libraryDependencies ++= Seq(
+    "software.amazon.awssdk" % "kms" % "2.7.18",
     "org.typelevel" %% "cats-core" % "2.0.0-RC1",
     "com.dwolla" %% "scala-cloudformation-custom-resource" % "4.0.0-M1-SNAPSHOT",
     "org.http4s" %% "http4s-blaze-client" % "0.20.8",
