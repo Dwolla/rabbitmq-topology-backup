@@ -1,4 +1,7 @@
+import sbtassembly.Log4j2MergeStrategy
+
 lazy val buildSettings = Seq(
+  scalaVersion := "2.12.8",
   organization := "com.dwolla",
   homepage := Some(url("https://github.com/Dwolla/rabbitmq-topology-backup")),
   description := "Connect to the RabbitMQ API and download the current exchange/queue topology",
@@ -16,17 +19,20 @@ lazy val buildSettings = Seq(
     "io.circe" %% "circe-optics" % "0.11.0",
     "com.dwolla" %% "testutils-scalatest-fs2" % "2.0.0-M1" % Test,
   ),
+  assemblyMergeStrategy in assembly := {
+    case PathList(ps @ _*) if ps.last == "io.netty.versions.properties" =>
+      MergeStrategy.concat
+    case PathList(ps @ _*) if ps.last == "Log4j2Plugins.dat" =>
+      Log4j2MergeStrategy.plugincache
+    case x =>
+      val oldStrategy = (assemblyMergeStrategy in assembly).value
+      oldStrategy(x)
+  },
+  assemblyJarName in assembly := normalizedName.value + ".jar"
 )
 
 lazy val `rabbitmq-topology-backup` = (project in file("."))
-  .settings(buildSettings ++ noPublishSettings: _*)
-
-lazy val noPublishSettings = Seq(
-  publish := {},
-  publishLocal := {},
-  publishArtifact := false,
-  Keys.`package` := file(""),
-)
+  .settings(buildSettings: _*)
 
 val documentationSettings = Seq(
   autoAPIMappings := true,

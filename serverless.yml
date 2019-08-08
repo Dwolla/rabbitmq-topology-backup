@@ -2,16 +2,48 @@ service: rabbitmq-topology-backup
 
 provider:
   name: aws
+  runtime: java8
+  memorySize: 1024
+  timeout: 60
   region: us-west-2
   deploymentBucket:
     name: ${opt:bucket}
+    serverSideEncryption: "AES256"
   cfnRole: "arn:aws:iam::${opt:account}:role/cloudformation/deployer/cloudformation-deployer"
+  iamRoleStatements:
+    - Effect: Allow
+      Action: kms:Decrypt
+      Resource:
+        Fn::GetAtt: [EncryptionKey, Arn]
+  logRetentionInDays: 7
   stackTags:
     Creator: serverless
     Environment: ${self:custom.EnvironmentTag.${opt:stage}}
     Project: ${self:service}
     Team: platform
     Visibility: internal
+
+package:
+  artifact: target/scala-2.12/rabbitmq-topology-backup.jar
+
+functions:
+  backup:
+    handler: com.dwolla.rabbitmq.topology.LambdaHandler
+    vpc:
+      securityGroupIds:
+        Fn::ImportValue: AccessEcsCluster-${self:custom.VpcImportPrefix.${opt:stage}}
+      subnetIds:
+        Fn::Split:
+          - ','
+          - !ImportValue ${self:custom.VpcImportPrefix.${opt:stage}}VpcInternalSubnets
+    events:
+      - eventBridge:
+          description: Hourly back up of RabbitMQ topology to CloudWatch
+          schedule: rate(1 hour)
+          input:
+            hostname: rabbit.us-west-2.${opt:stage}.dwolla.net
+            username: guest
+            password: ${self:custom.Credentials.${opt:stage}}
 
 resources:
   Description: "A serverless app to regularly back up the topology of a given RabbitMQ cluster to CloudWatch Logs"
@@ -60,3 +92,13 @@ custom:
     uat: uat
     devint: devint
     sandbox: sandbox
+  VpcImportPrefix:
+    prod: Prod
+    uat: Uat
+    devint: DevInt
+    sandbox: Sandbox
+  Credentials:
+    prod: "AQICAHiDNht96T/IKQK0KfuZpG+Aw4vUrb9L8CpGZlT4k+zE4QFC4I43mcb1zz7FncDWMb+iAAAAYzBhBgkqhkiG9w0BBwagVDBSAgEAME0GCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQM1SX6iQLislO11jSJAgEQgCDG1oxeWIyw+J1cWKSxT6hLuA+VZZ/eNFGCw5sztFv4qA=="
+    uat: "AQICAHiegsUSdl9tn+48V5sbA6PETCu1Wcyy31foqE323H1I5QH4ZJA7sKyo+WybFM+dadoOAAAAYzBhBgkqhkiG9w0BBwagVDBSAgEAME0GCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMOKQv6U6njHoZzIWxAgEQgCC2VCRrNF5O9VjIdJbANJ4uBLosUdqNm+gBuQ2igN3Kxw=="
+    devint: "AQICAHiJE+vM1VKEiQpXXtbfIKwjr5wCpmMhCdnS6y6/6difLQHWlWmvntNurE47Nj9yjiyxAAAAYzBhBgkqhkiG9w0BBwagVDBSAgEAME0GCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMUXdDbknkKI11IIJMAgEQgCCAseunTuVe7QYyZJUWqc7x9DfDOc0WHgaMqTnPzj1SZw=="
+    sandbox: "AQICAHgb9o3/IugdfQGA/kgXhS09JW4ZaWptMszqUXn+B15pnwGz0IJhY8rKr4gdAC33iAphAAAAYzBhBgkqhkiG9w0BBwagVDBSAgEAME0GCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMRbuM/bBBe6mqguEOAgEQgCBkJrGnRlZLxC1+AYVEY1R2YJW0rQSmIudSpkq9dESrmQ=="

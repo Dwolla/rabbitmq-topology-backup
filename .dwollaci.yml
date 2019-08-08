@@ -2,10 +2,11 @@ stages:
   build:
     nodeLabel: sbt
     steps:
-      - /bin/true
+      - sbt assembly
     filesToStash:
       - serverless.yml
       - .nvmrc
+      - target/scala-2.12/rabbitmq-topology-backup.jar
   deployDevInt:
     nodeLabel: nvm-deployer
     steps:

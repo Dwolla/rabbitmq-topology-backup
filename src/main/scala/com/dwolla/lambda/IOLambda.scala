@@ -2,7 +2,8 @@ package com.dwolla.lambda
 
 import java.io._
 
-import cats.data.OptionT
+import cats._
+import cats.data._
 import cats.effect._
 import cats.implicits._
 import com.amazonaws.services.lambda.runtime._
@@ -29,10 +30,11 @@ abstract class IOLambda[A: Decoder, B: Encoder](printer: Printer, protected val 
   def handleRequest(t: A): IO[Option[B]]
 }
 
-abstract class CatsLambda[F[_] : Sync, A: Decoder, B: Encoder](printer: Printer = Printer.noSpaces) {
+abstract class CatsLambda[F[_] : Sync, A: Decoder, B: Encoder](printer: Printer = Printer.noSpaces, logRequest: Boolean = true) {
   def handleRequest(req: A): F[Option[B]]
 
   protected lazy val logger: Logger = LogManager.getLogger("LambdaLogger")
+  private val logRequestF: F[Boolean] = logRequest.pure[F]
 
   private def readFrom(inputStream: InputStream): F[String] =
     Sync[F].delay(Source.fromInputStream(inputStream).mkString)
@@ -52,6 +54,12 @@ abstract class CatsLambda[F[_] : Sync, A: Decoder, B: Encoder](printer: Printer 
       logger.error(s"Could not parse the following input:\n$str", ex)
       ex
     }).leftWiden[Throwable].rethrowT
+      .flatTap(logJsonIfEnabled)
+
+  private def logJsonIfEnabled(json: Json): F[Unit] =
+    logRequestF.ifA(Sync[F].delay(logger.info(
+      """Received input:
+        |{}""".stripMargin, json)), Applicative[F].unit)
 
   private def parseStream(inputStream: InputStream): F[A] =
     for {
