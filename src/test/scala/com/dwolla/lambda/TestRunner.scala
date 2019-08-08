@@ -10,10 +10,11 @@ object TestRunner extends App {
 
   val input: InputStream = new ByteArrayInputStream(
     json"""{
-             "hostname": "https://rabbit.us-west-2.sandbox.dwolla.net",
+             "hostname": "https://rabbit.us-west-2.devint.dwolla.net",
              "username": "guest",
              "password": "AQICAHh38+DAqADvcRLU4+t2AYhr82YbZuuFQdjdX95NTppHhwHd8XtgUIF6t8gP+mKlCrizAAAAYzBhBgkqhkiG9w0BBwagVDBSAgEAME0GCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMuvCOEA4D/QGIaihbAgEQgCATYPnSoUh0UI+QsqlR00kP7cGLdyh6fUrfBv7Gzt8ToA=="
            }""".noSpaces.getBytes)
+  val badInput: InputStream = new ByteArrayInputStream("{Bad input".getBytes)
   val output: ByteArrayOutputStream = new ByteArrayOutputStream()
 
   new LambdaHandler(Printer.spaces2).handleRequest(input, output, null)
