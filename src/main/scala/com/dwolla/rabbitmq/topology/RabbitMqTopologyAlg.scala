@@ -27,10 +27,9 @@ object RabbitMqTopologyAlg {
   private def redactPasswordFields(j: Json): Json =
     j.fold(j, Json.fromBoolean, Json.fromJsonNumber, Json.fromString, a => Json.fromValues(a.map(redactPasswordFields)), redactPasswordFields)
 
-  def resource[F[_] : ConcurrentEffect](baseUri: Uri, username: Username, password: Password): Resource[F, RabbitMqTopologyAlg[F]] =
+  def resource[F[_] : ConcurrentEffect](blocker: Blocker, baseUri: Uri, username: Username, password: Password): Resource[F, RabbitMqTopologyAlg[F]] =
     for {
-      b <- Blocker[F]
-      httpClient <- BlazeClientBuilder[F](b.blockingContext).resource.map(client.middleware.Logger[F](logHeaders = true, logBody = true))
+      httpClient <- BlazeClientBuilder[F](blocker.blockingContext).resource.map(client.middleware.Logger[F](logHeaders = true, logBody = false))
     } yield new RabbitMqTopologyAlg[F] with Http4sClientDsl[F] {
       private val definitionsUri = baseUri / "api" / "definitions"
       private val authorizationHeader = Authorization(BasicCredentials(username, password))
