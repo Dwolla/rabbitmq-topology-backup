@@ -1,0 +1,46 @@
+stages:
+  build:
+    nodeLabel: sbt
+    steps:
+      - /bin/true
+    filesToStash:
+      - serverless.yml
+  deployDevInt:
+    nodeLabel: nvm-deployer
+    steps:
+      - |
+        . ${NVM_DIR}/nvm.sh --no-use
+        nvm install
+        npm install -g npm
+        npm install -g serverless
+        serverless deploy \
+          --region us-west-2 \
+          --account 455620323323 \
+          --bucket dwolla-code \
+          --stage devint
+  deployUat:
+    nodeLabel: nvm-deployer
+    steps:
+      - |
+        . ${NVM_DIR}/nvm.sh --no-use
+        nvm install
+        npm install -g npm
+        npm install -g serverless
+        serverless deploy \
+          --region us-west-2 \
+          --account 455620323323 \
+          --bucket dwolla-code \
+          --stage uat
+  deployProd:
+    nodeLabel: nvm-deployer
+    steps:
+      - |
+        . ${NVM_DIR}/nvm.sh --no-use
+        nvm install
+        npm install -g npm
+        npm install -g serverless
+        serverless deploy \
+          --region us-west-2 \
+          --account 455620323323 \
+          --bucket dwolla-code \
+          --stage prod

@@ -1,0 +1,62 @@
+service: rabbitmq-topology-backup
+
+provider:
+  name: aws
+  region: us-west-2
+  deploymentBucket:
+    name: ${opt:bucket}
+  cfnRole: "arn:aws:iam::${opt:account}}:role/cloudformation/deployer/cloudformation-deployer"
+  stackTags:
+    Creator: serverless
+    Environment: ${self:custom.EnvironmentTag.${opt:stage}}
+    Project: ${self:service}
+    Team: platform
+    Visibility: internal
+
+resources:
+  Description: "A serverless app to regularly back up the topology of a given RabbitMQ cluster to CloudWatch Logs"
+  Resources:
+    EncryptionKey:
+      Type: AWS::KMS::Key
+      Properties:
+        KeyPolicy:
+          Version: '2012-10-17'
+          Statement:
+            - Sid: 'Allow root access'
+              Effect: 'Allow'
+              Principal:
+                AWS:
+                  !Join
+                  - ''
+                  - - "arn:aws:iam::"
+                    - !Ref 'AWS::AccountId'
+                    - ":root"
+              Action: 'kms:*'
+              Resource: '*'
+            - Sid: 'Allow DataEncrypter to encrypt'
+              Effect: 'Allow'
+              Principal:
+                AWS:
+                  !Join
+                  - ''
+                  - - "arn:aws:iam::"
+                    - !Ref 'AWS::AccountId'
+                    - ":role/DataEncrypter"
+              Action:
+                - 'kms:Encrypt'
+                - 'kms:ReEncrypt*'
+                - 'kms:DescribeKey'
+              Resource: '*'
+    EncryptionKeyAlias:
+      Type: AWS::KMS::Alias
+      Properties:
+        AliasName: alias/${self:service}-${opt:stage}-key
+        TargetKeyId:
+          Ref: EncryptionKey
+
+custom:
+  EnvironmentTag:
+    prod: production
+    uat: uat
+    devint: devint
+    sandbox: sandbox
