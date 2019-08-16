@@ -5,6 +5,7 @@ stages:
       - /bin/true
     filesToStash:
       - serverless.yml
+      - .nvmrc
   deployDevInt:
     nodeLabel: nvm-deployer
     steps:
