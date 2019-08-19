@@ -5,7 +5,7 @@ provider:
   region: us-west-2
   deploymentBucket:
     name: ${opt:bucket}
-  cfnRole: "arn:aws:iam::${opt:account}}:role/cloudformation/deployer/cloudformation-deployer"
+  cfnRole: "arn:aws:iam::${opt:account}:role/cloudformation/deployer/cloudformation-deployer"
   stackTags:
     Creator: serverless
     Environment: ${self:custom.EnvironmentTag.${opt:stage}}
