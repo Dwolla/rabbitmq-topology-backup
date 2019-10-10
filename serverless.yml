@@ -24,7 +24,7 @@ provider:
     Visibility: internal
 
 package:
-  artifact: target/scala-2.12/rabbitmq-topology-backup.jar
+  artifact: target/scala-2.13/rabbitmq-topology-backup.jar
 
 functions:
   backup:

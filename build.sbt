@@ -1,37 +1,36 @@
 import sbtassembly.Log4j2MergeStrategy
 
 lazy val buildSettings = Seq(
-  scalaVersion := "2.12.8",
   organization := "com.dwolla",
   homepage := Some(url("https://github.com/Dwolla/rabbitmq-topology-backup")),
   description := "Connect to the RabbitMQ API and download the current exchange/queue topology",
   licenses += ("MIT", url("http://opensource.org/licenses/MIT")),
   startYear := Option(2019),
   libraryDependencies ++= {
-    val circeVersion = "0.12.0-RC2"
+    val circeVersion = "0.12.2"
+    val http4sVersion = "0.21.0-M5"
+    val fs2Version = "2.0.1"
     Seq(
       "software.amazon.awssdk" % "kms" % "2.7.18",
       "com.amazonaws" % "aws-lambda-java-core" % "1.1.0",
       "com.amazonaws" % "aws-lambda-java-log4j2" % "1.0.0",
-      "org.typelevel" %% "cats-core" % "2.0.0-RC1",
-      "org.typelevel" %% "cats-effect" % "2.0.0-RC1",
-      "co.fs2" %% "fs2-core" % "1.1.0-M1",
-      "co.fs2" %% "fs2-io" % "1.1.0-M1",
-      "org.http4s" %% "http4s-blaze-client" % "0.20.8",
-      "org.http4s" %% "http4s-circe" % "0.20.8",
-      "org.http4s" %% "http4s-dsl" % "0.20.8",
+      "org.typelevel" %% "cats-core" % "2.0.0",
+      "org.typelevel" %% "cats-effect" % "2.0.0",
+      "co.fs2" %% "fs2-core" % fs2Version,
+      "co.fs2" %% "fs2-io" % fs2Version,
+      "org.http4s" %% "http4s-blaze-client" % http4sVersion,
+      "org.http4s" %% "http4s-circe" % http4sVersion,
+      "org.http4s" %% "http4s-dsl" % http4sVersion,
       "io.circe" %% "circe-literal" % circeVersion,
       "io.circe" %% "circe-generic-extras" % circeVersion,
       "io.circe" %% "circe-parser" % circeVersion,
-      "io.circe" %% "circe-optics" % circeVersion,
       "io.circe" %% "circe-generic-extras" % circeVersion,
-      "io.circe" %% "circe-fs2" % "0.12.0-M1",
-      "io.chrisdavenport" %% "log4cats-slf4j" % "1.0.0-RC1",
+      "io.chrisdavenport" %% "log4cats-slf4j" % "1.0.0",
       "org.apache.logging.log4j" % "log4j-slf4j-impl" % "2.11.2",
       "org.apache.logging.log4j" % "log4j-api" % "2.11.2",
       "com.amazonaws" % "aws-lambda-java-core" % "1.1.0",
       "com.amazonaws" % "aws-lambda-java-log4j2" % "1.0.0",
-      "com.dwolla" %% "testutils-scalatest-fs2" % "2.0.0-M1" % Test,
+      "com.dwolla" %% "testutils-scalatest-fs2" % "2.0.0-M3" % Test,
     )
   },
   assemblyMergeStrategy in assembly := {

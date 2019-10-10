@@ -13,6 +13,7 @@ import org.http4s.headers.Authorization
 
 trait RabbitMqTopologyAlg[F[_]] {
   def retrieveTopology: F[RabbitMqTopology]
+
   def putTopology(rabbitMqTopology: RabbitMqTopology): F[Unit]
 }
 
@@ -28,23 +29,26 @@ object RabbitMqTopologyAlg {
     j.fold(j, Json.fromBoolean, Json.fromJsonNumber, Json.fromString, a => Json.fromValues(a.map(redactPasswordFields)), redactPasswordFields)
 
   def resource[F[_] : ConcurrentEffect](blocker: Blocker, baseUri: Uri, username: Username, password: Password): Resource[F, RabbitMqTopologyAlg[F]] =
-    for {
-      httpClient <- BlazeClientBuilder[F](blocker.blockingContext).resource.map(client.middleware.Logger[F](logHeaders = true, logBody = false))
-    } yield new RabbitMqTopologyAlg[F] with Http4sClientDsl[F] {
-      private val definitionsUri = baseUri / "api" / "definitions"
-      private val authorizationHeader = Authorization(BasicCredentials(username, password))
+    BlazeClientBuilder[F](blocker.blockingContext)
+      .resource
+      .map(client.middleware.Logger[F](logHeaders = true, logBody = false))
+      .map { httpClient =>
+        new RabbitMqTopologyAlg[F] with Http4sClientDsl[F] {
+          private val definitionsUri = baseUri / "api" / "definitions"
+          private val authorizationHeader = Authorization(BasicCredentials(username, password))
 
-      override def retrieveTopology: F[RabbitMqTopology] =
-        for {
-          req <- GET(definitionsUri, authorizationHeader)
-          res <- httpClient.expect[Json](req).map(redactPasswordFields)
-          topology <- res.as[RabbitMqTopology].liftTo[F]
-        } yield topology
+          override def retrieveTopology: F[RabbitMqTopology] =
+            for {
+              req <- GET(definitionsUri, authorizationHeader)
+              res <- httpClient.expect[Json](req).map(redactPasswordFields)
+              topology <- res.as[RabbitMqTopology].liftTo[F]
+            } yield topology
 
-      override def putTopology(rabbitMqTopology: RabbitMqTopology): F[Unit] =
-        for {
-          req <- POST(rabbitMqTopology, definitionsUri, authorizationHeader)
-          res <- httpClient.expect[Unit](req)
-        } yield res
-    }
+          override def putTopology(rabbitMqTopology: RabbitMqTopology): F[Unit] =
+            for {
+              req <- POST(rabbitMqTopology, definitionsUri, authorizationHeader)
+              res <- httpClient.expect[Unit](req)
+            } yield res
+        }
+      }
 }
