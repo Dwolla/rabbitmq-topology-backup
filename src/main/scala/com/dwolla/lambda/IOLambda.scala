@@ -2,8 +2,9 @@ package com.dwolla.lambda
 
 import java.io._
 
-import _root_.fs2.io.readInputStream
-import _root_.fs2.text.utf8Decode
+import _root_.fs2.io.{readInputStream, writeOutputStream}
+import _root_.fs2.text.{utf8Decode, utf8Encode}
+import _root_.fs2.Stream
 import cats._
 import cats.data._
 import cats.effect._
@@ -26,9 +27,9 @@ abstract class IOLambda[A: Decoder, B: Encoder](printer: Printer = Defaults.prin
   protected implicit def timer: Timer[IO] = cats.effect.IO.timer(executionContext)
 
   override def handleRequest(input: InputStream, output: OutputStream, context: Context): Unit =
-    Blocker[IO].use { blocker =>
-      IOLambda(blocker, this, printer, logRequest).handleRequestAndWriteResponse(input, output)
-    }.unsafeRunSync()
+    Blocker[IO]
+      .use(IOLambda(_, this, printer, logRequest).handleRequestAndWriteResponse(input, output))
+      .unsafeRunSync()
 
   def handleRequest(blocker: Blocker)(a: A): IO[Option[B]]
 }
@@ -44,61 +45,71 @@ object IOLambda {
                                     ioLambda: IOLambda[A, B],
                                     printer: Printer,
                                     logRequest: Boolean)
-                                   (implicit CS: ContextShift[IO]): LambdaF[IO, A, B] =
-    new LambdaF[IO, A, B](blocker, printer, logRequest) {
+                                   (implicit CS: ContextShift[IO]): JsonLambdaF[IO, A, B] =
+    new JsonLambdaF[IO, A, B](blocker, printer, logRequest) {
       override def handleRequest(req: A): IO[Option[B]] = ioLambda.handleRequest(blocker)(req)
     }
 }
 
-abstract class LambdaF[F[_] : Sync : ContextShift, A: Decoder, B: Encoder](blocker: Blocker,
-                                                                           printer: Printer = Printer.noSpaces,
-                                                                           logRequest: Boolean = true) {
+abstract class LambdaF[F[_] : Sync : ContextShift](blocker: Blocker) {
+  def run(input: Stream[F, Byte]): Stream[F, Byte]
+
+  private def readStream(inputStream: InputStream): Stream[F, Byte] =
+    readInputStream(Sync[F].delay(inputStream), 4096, blocker)
+
+  private def writeTo(outputStream: OutputStream): Stream[F, Byte] => Stream[F, Unit] =
+    writeOutputStream(Sync[F].delay(outputStream), blocker)
+
+  def handleRequestAndWriteResponse(inputStream: InputStream, outputStream: OutputStream): F[Unit] =
+    readStream(inputStream)
+      .through(run)
+      .through(writeTo(outputStream))
+      .compile
+      .drain
+}
+
+abstract class JsonLambdaF[F[_] : Sync : ContextShift, A: Decoder, B: Encoder](blocker: Blocker,
+                                                                               printer: Printer = Printer.noSpaces,
+                                                                               logRequest: Boolean = true) extends LambdaF[F](blocker) {
   def handleRequest(req: A): F[Option[B]]
 
   protected implicit def logger: Logger[F] = Slf4jLogger.getLoggerFromName[F]("LambdaLogger")
-
   private val logRequestF: F[Boolean] = logRequest.pure[F]
 
-  private def readFrom(inputStream: InputStream): F[String] =
-    readInputStream(Sync[F].delay(inputStream), 4096, blocker)
-      .through(utf8Decode[F])
+  private val readFrom: Stream[F, Byte] => F[String] =
+    _.through(utf8Decode[F])
       .compile
       .lastOrError
 
-  private def printTo(outputStream: OutputStream)(b: B): F[Unit] =
-    Resource
-      .fromAutoCloseable(Sync[F].delay(new PrintStream(outputStream)))
-      .use { ps =>
-        Sync[F].delay(ps.print(printer.pretty(b.asJson)))
-      }
+  private def printToStream(b: B): Stream[F, Byte] =
+    Stream.emit(printer.print(b.asJson))
+        .through(utf8Encode[F])
 
-  private def writeTo(outputStream: OutputStream)(maybeB: Option[B]): F[Unit] =
-    OptionT.fromOption[F](maybeB)
-      .semiflatMap(printTo(outputStream))
-      .value
-      .void
+  private def writeOutput(maybeB: Option[B]): Stream[F, Byte] =
+    Stream.emits(maybeB.toSeq)
+        .flatMap(printToStream)
 
   private def parseStringLoggingErrors(str: String): F[Json] =
     parse(str)
       .toEitherT[F]
       .leftSemiflatTap(Logger[F].error(_)(s"Could not parse the following input:\n$str"))
-      .leftWiden[Throwable].rethrowT
+      .rethrowT
       .flatTap(logJsonIfEnabled)
 
   private def logJsonIfEnabled(json: Json): F[Unit] =
     logRequestF.ifA(Logger[F].info(
       s"""Received input:
-         |${printer.pretty(json)}""".stripMargin), Applicative[F].unit)
+         |${printer.print(json)}""".stripMargin), Applicative[F].unit)
 
-  private def parseStream(inputStream: InputStream): F[A] =
+  private def parseStream(input: Stream[F, Byte]): F[A] =
     for {
-      str <- readFrom(inputStream)
+      str <- readFrom(input)
       json <- parseStringLoggingErrors(str)
       req <- json.as[A].liftTo[F]
     } yield req
 
-  def handleRequestAndWriteResponse(inputStream: InputStream, outputStream: OutputStream): F[Unit] =
-    parseStream(inputStream) >>= handleRequest >>= writeTo(outputStream)
+  override def run(input: Stream[F, Byte]): Stream[F, Byte] =
+    Stream.eval(parseStream(input) >>= handleRequest) >>= writeOutput
 
 }
 
