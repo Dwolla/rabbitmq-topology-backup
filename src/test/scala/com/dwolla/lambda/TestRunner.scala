@@ -5,8 +5,10 @@ import java.io._
 import com.dwolla.rabbitmq.topology.LambdaHandler
 import io.circe.Printer
 import io.circe.literal._
+import org.slf4j.LoggerFactory
 
 object TestRunner extends App {
+  val logger = LoggerFactory.getLogger("TestRunner")
 
   val input: InputStream = new ByteArrayInputStream(
     json"""{
@@ -19,5 +21,5 @@ object TestRunner extends App {
 
   new LambdaHandler(Printer.spaces2).handleRequest(input, output, null)
 
-  println(output)
+  logger.info("{}", output)
 }
