@@ -1,6 +1,7 @@
 package com.dwolla.rabbitmq.topology
 
 import cats.effect._
+import com.dwolla.fs2aws.kms.KmsAlg
 import com.dwolla.lambda.IOLambda
 import com.dwolla.rabbitmq.topology.model._
 import io.circe.Printer
