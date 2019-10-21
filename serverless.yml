@@ -32,6 +32,7 @@ functions:
     vpc:
       securityGroupIds:
         - Fn::ImportValue: AccessEcsCluster-${self:custom.VpcImportPrefix.${opt:stage}}
+        - Ref: SourceMarkerSecurityGroup
       subnetIds:
         Fn::Split:
           - ','
@@ -85,6 +86,23 @@ resources:
         AliasName: alias/${self:service}-${opt:stage}-key
         TargetKeyId:
           Ref: EncryptionKey
+    SourceMarkerSecurityGroup:
+      Type: AWS::EC2::SecurityGroup
+      Properties:
+        GroupDescription: Source security group marking an ENI as a legitimate source of traffic to the RabbitMQ cluster
+        VpcId:
+          - Fn::ImportValue: ${self:custom.VpcImportPrefix.${opt:stage}}VpcId
+        Tags:
+          - Key: SecurityGroupType
+            Value: TrafficSource
+  Outputs:
+    SourceMarkerSecurityGroup:
+      Value:
+        Ref: SourceMarkerSecurityGroup
+      Description:
+        Source security group ID that can be imported to mark this lambda as a legitimate source of traffic to the RabbitMQ cluster
+      Export:
+        Name: ${self:service}:${self:custom.VpcImportPrefix.${opt:stage}}:TrafficSource
 
 custom:
   EnvironmentTag:
