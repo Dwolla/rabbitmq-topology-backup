@@ -91,7 +91,7 @@ resources:
       Properties:
         GroupDescription: Source security group marking an ENI as a legitimate source of traffic to the RabbitMQ cluster
         VpcId:
-          - Fn::ImportValue: ${self:custom.VpcImportPrefix.${opt:stage}}VpcId
+          Fn::ImportValue: ${self:custom.VpcImportPrefix.${opt:stage}}VpcId
         Tags:
           - Key: SecurityGroupType
             Value: TrafficSource
