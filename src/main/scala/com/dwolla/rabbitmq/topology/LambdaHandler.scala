@@ -13,6 +13,6 @@ class LambdaHandler(printer: Printer) extends IOLambda[RabbitMQConfig, RabbitMqT
                             (input: RabbitMQConfig): IO[Option[RabbitMqTopology]] =
     for {
       password <- KmsAlg.resource[IO].use(_.decrypt(input.password)).map(tagPassword)
-      topology <- RabbitMqTopologyAlg.resource[IO](blocker, input.hostname, input.username, password).use(_.retrieveTopology)
+      topology <- RabbitMqTopologyAlg.resource[IO](blocker, input.baseUri, input.username, password).use(_.retrieveTopology)
     } yield Option(topology)
 }
