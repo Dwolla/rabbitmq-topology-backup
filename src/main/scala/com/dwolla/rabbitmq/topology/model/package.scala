@@ -21,7 +21,7 @@ package object model {
 }
 
 package model  {
-  case class RabbitMQConfig(hostname: Uri, username: Username, password: String)
+  case class RabbitMQConfig(baseUri: Uri, username: Username, password: String)
   object RabbitMQConfig {
     implicit def rabbitMQConfigEncoder[F[_]]: Encoder[RabbitMQConfig] = deriveEncoder
     implicit def rabbitMQConfigDecoder[F[_]]: Decoder[RabbitMQConfig] = deriveDecoder
