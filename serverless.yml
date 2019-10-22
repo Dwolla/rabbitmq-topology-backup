@@ -37,9 +37,9 @@ functions:
           - ','
           - !ImportValue ${self:custom.VpcImportPrefix.${opt:stage}}VpcInternalSubnets
     events:
-      - eventBridge:
+      - schedule:
           description: Hourly back up of RabbitMQ topology to CloudWatch
-          schedule: rate(1 hour)
+          rate: rate(1 hour)
           input:
             baseUri: https://rabbit.us-west-2.${opt:stage}.dwolla.net
             username: guest
