@@ -7,4 +7,4 @@ jdk:
   - openjdk8
 
 script:
-  - sbt ++$TRAVIS_SCALA_VERSION assembly
+  - sbt ++$TRAVIS_SCALA_VERSION test universal:packageBin

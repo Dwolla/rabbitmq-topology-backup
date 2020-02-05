@@ -1,7 +1,6 @@
-import sbtassembly.Log4j2MergeStrategy
-
 lazy val buildSettings = Seq(
   organization := "com.dwolla",
+  maintainer := s"dev+${name.value}@dwolla.com",
   homepage := Some(url("https://github.com/Dwolla/rabbitmq-topology-backup")),
   description := "Connect to the RabbitMQ API and download the current exchange/queue topology",
   licenses += ("MIT", url("http://opensource.org/licenses/MIT")),
@@ -12,16 +11,9 @@ lazy val buildSettings = Seq(
     Resolver.bintrayRepo("dwolla", "maven"),
     Resolver.sonatypeRepo("releases"),
   ),
-  assemblyMergeStrategy in assembly := {
-    case PathList(ps @ _*) if ps.last == "io.netty.versions.properties" =>
-      MergeStrategy.concat
-    case PathList(ps @ _*) if ps.last == "Log4j2Plugins.dat" =>
-      Log4j2MergeStrategy.plugincache
-    case x =>
-      val oldStrategy = (assemblyMergeStrategy in assembly).value
-      oldStrategy(x)
-  },
-  assemblyJarName in assembly := normalizedName.value + ".jar",
+  mappings in (Compile, packageDoc) := Seq(),
+  publishArtifact in (Compile, packageDoc) := false,
+  topLevelDirectory := None,
   Compile / scalacOptions ++= {
     CrossVersion.partialVersion(scalaVersion.value) match {
       case Some((2, n)) if n >= 13 => "-Ymacro-annotations" :: Nil
@@ -61,3 +53,4 @@ lazy val `rabbitmq-topology-backup` = (project in file("."))
       )
     },
   )
+  .enablePlugins(UniversalPlugin, JavaAppPackaging)
