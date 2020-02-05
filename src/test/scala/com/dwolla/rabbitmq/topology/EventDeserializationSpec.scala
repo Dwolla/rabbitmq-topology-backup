@@ -1,11 +1,13 @@
 package com.dwolla.rabbitmq.topology
 
 import com.dwolla.rabbitmq.topology.model.{RabbitMQConfig, Username}
-import org.scalatest.{EitherValues, FlatSpec, Matchers}
 import io.circe.literal._
 import org.http4s.syntax.all._
+import org.scalatest.EitherValues
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
-class EventDeserializationSpec extends FlatSpec with Matchers with EitherValues {
+class EventDeserializationSpec extends AnyFlatSpec with Matchers with EitherValues {
 
   behavior of "event deserialization"
 

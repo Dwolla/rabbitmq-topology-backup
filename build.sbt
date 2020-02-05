@@ -7,6 +7,7 @@ lazy val buildSettings = Seq(
   licenses += ("MIT", url("http://opensource.org/licenses/MIT")),
   startYear := Option(2019),
   addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.11.0" cross CrossVersion.full),
+  addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1"),
   resolvers ++= Seq(
     Resolver.bintrayRepo("dwolla", "maven"),
     Resolver.sonatypeRepo("releases"),
@@ -20,24 +21,43 @@ lazy val buildSettings = Seq(
       val oldStrategy = (assemblyMergeStrategy in assembly).value
       oldStrategy(x)
   },
-  assemblyJarName in assembly := normalizedName.value + ".jar"
+  assemblyJarName in assembly := normalizedName.value + ".jar",
+  Compile / scalacOptions ++= {
+    CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((2, n)) if n >= 13 => "-Ymacro-annotations" :: Nil
+      case _ => Nil
+    }
+  },
+
+  libraryDependencies ++= {
+    CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((2, n)) if n >= 13 => Nil
+      case _ => compilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full) :: Nil
+    }
+  },
 )
 
 lazy val `rabbitmq-topology-backup` = (project in file("."))
   .settings(buildSettings: _*)
   .settings(
     libraryDependencies ++= {
-      val http4sVersion = "0.21.0-M5"
-      val fs2AwsVersion = "2.0.0-M5"
+      val http4sVersion = "0.21.0"
+      val circeVersion = "0.13.0"
+      val fs2AwsVersion = "2.0.0-M8"
+      val amazonXRayVersion = "2.4.0"
       Seq(
+        "com.amazonaws" % "aws-xray-recorder-sdk-core" % amazonXRayVersion,
+        "com.amazonaws" % "aws-xray-recorder-sdk-aws-sdk-v2-instrumentor" % amazonXRayVersion,
         "software.amazon.awssdk" % "kms" % "2.7.18",
         "com.dwolla" %% "fs2-aws-java-sdk2" % fs2AwsVersion,
         "com.dwolla" %% "fs2-aws-lambda-io-app" % fs2AwsVersion,
-        "org.http4s" %% "http4s-blaze-client" % http4sVersion,
+        "org.http4s" %% "http4s-ember-client" % http4sVersion,
         "org.http4s" %% "http4s-circe" % http4sVersion,
         "org.http4s" %% "http4s-dsl" % http4sVersion,
-        "com.dwolla" %% "testutils-scalatest-fs2" % "2.0.0-M3" % Test,
+        "com.dwolla" %% "testutils-scalatest-fs2" % "2.0.0-M4" % Test,
         "org.http4s" %% "http4s-server" % http4sVersion % Test,
+        "io.circe" %% "circe-literal" % circeVersion % Test,
+        "io.circe" %% "circe-parser" % circeVersion % Test,
       )
     },
   )
