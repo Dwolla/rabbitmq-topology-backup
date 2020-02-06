@@ -14,12 +14,12 @@ import com.dwolla.rabbitmq.topology.model._
 import io.circe._
 import io.circe.syntax._
 import natchez._
+import natchez.awsxray._
 import org.http4s.client.Client
 import org.http4s.ember.client._
 
 class LambdaHandler extends IOLambda[RabbitMQConfig, Unit] {
-// TODO enable XRay Tracing
-//  override val tracingEntryPoint: Resource[IO, EntryPoint[IO]] = AWSXRayTracer.entryPoint[IO]
+ override val tracingEntryPoint: Resource[IO, EntryPoint[IO]] = AWSXRayTracer.entryPoint[IO]
 
   override def handleRequestF[F[_] : Concurrent : ContextShift : Timer : Trace](blocker: Blocker)
                                                                                (req: RabbitMQConfig, context: Context): F[LambdaResponse[Unit]] = {
