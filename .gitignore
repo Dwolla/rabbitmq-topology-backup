@@ -7,3 +7,7 @@ logs/
 *.orig
 .ruby-version
 .serverless/
+.metals/
+.bloop/
+project/metals.sbt
+.vscode/

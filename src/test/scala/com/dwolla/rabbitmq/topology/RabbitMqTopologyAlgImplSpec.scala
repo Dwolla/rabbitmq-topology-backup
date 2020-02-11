@@ -18,7 +18,8 @@ import org.http4s.server.AuthMiddleware
 import org.http4s.server.middleware.VirtualHost
 import org.http4s.server.middleware.VirtualHost.exact
 import org.http4s.syntax.all._
-import org.scalatest._
+import org.scalatest.ParallelTestExecution
+import org.scalatest.matchers.should.Matchers
 
 class RabbitMqTopologyAlgImplSpec extends IOSpec with Matchers with Http4sDsl[IO] with ParallelTestExecution {
   import FakeRabbitMqService._
