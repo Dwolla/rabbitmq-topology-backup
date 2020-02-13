@@ -3,8 +3,8 @@ service: rabbitmq-topology-backup
 provider:
   name: aws
   runtime: java8
-  memorySize: 1024
-  timeout: 60
+  memorySize: 3008
+  timeout: 900
   region: us-west-2
   deploymentBucket:
     name: ${opt:bucket}
