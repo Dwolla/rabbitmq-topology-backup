@@ -15,6 +15,7 @@ lazy val buildSettings = Seq(
   mappings in (Compile, packageDoc) := Seq(),
   publishArtifact in (Compile, packageDoc) := false,
   topLevelDirectory := None,
+  packageName in Universal := name.value,
   Compile / scalacOptions ++= {
     CrossVersion.partialVersion(scalaVersion.value) match {
       case Some((2, n)) if n >= 13 => "-Ymacro-annotations" :: Nil
@@ -34,9 +35,9 @@ lazy val `rabbitmq-topology-backup` = (project in file("."))
   .settings(buildSettings: _*)
   .settings(
     libraryDependencies ++= {
-      val http4sVersion = "0.21.0"
+      val http4sVersion = "0.21.1"
       val circeVersion = "0.13.0"
-      val fs2AwsVersion = "2.0.0-M8"
+      val fs2AwsVersion = "2.0.0-M9"
       val amazonXRayVersion = "2.4.0"
       Seq(
         "com.amazonaws" % "aws-xray-recorder-sdk-core" % amazonXRayVersion,
@@ -52,6 +53,7 @@ lazy val `rabbitmq-topology-backup` = (project in file("."))
         "org.http4s" %% "http4s-server" % http4sVersion % Test,
         "io.circe" %% "circe-literal" % circeVersion % Test,
         "io.circe" %% "circe-parser" % circeVersion % Test,
+        "io.chrisdavenport" %% "log4cats-slf4j" % "1.0.1" % Test,
       )
     },
   )
