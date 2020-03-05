@@ -11,6 +11,7 @@ import com.dwolla.fs2aws.kms.KmsAlg
 import com.dwolla.lambda._
 import com.dwolla.rabbitmq.topology.WithTracingOps._
 import com.dwolla.rabbitmq.topology.model._
+import io.chrisdavenport.log4cats.Logger
 import io.circe._
 import io.circe.syntax._
 import natchez._
@@ -19,23 +20,22 @@ import org.http4s.client.Client
 import org.http4s.ember.client._
 
 class LambdaHandler extends IOLambda[RabbitMQConfig, Unit] {
- override val tracingEntryPoint: Resource[IO, EntryPoint[IO]] = AWSXRayTracer.entryPoint[IO]
+  override val tracingEntryPoint: Resource[IO, EntryPoint[IO]] = AWSXRayTracer.entryPoint[IO]
 
-  override def handleRequestF[F[_] : Concurrent : ContextShift : Timer : Trace](blocker: Blocker)
-                                                                               (req: RabbitMQConfig, context: Context): F[LambdaResponse[Unit]] = {
-    val resources: Resource[F, LambdaHandlerAlg[F]] =
-      for {
-        kms <- KmsAlg.resource[F].map(_.withTracing)
-        http <- EmberClientBuilder.default[F].build
-      } yield LambdaHandlerAlg(kms, http)
+  private def resources[F[_] : Concurrent : ContextShift : Logger : Timer : Trace]: Resource[F, LambdaHandlerAlg[F]] =
+    for {
+      kms <- KmsAlg.resource[F].map(_.withTracing)
+      http <- EmberClientBuilder.default[F].build
+    } yield LambdaHandlerAlg(kms, http)
 
-    resources.use { alg =>
+  override def handleRequestF[F[_] : Concurrent : ContextShift : Logger : Timer : Trace](blocker: Blocker)
+                                                                                        (req: RabbitMQConfig, context: Context): F[LambdaResponse[Unit]] =
+    resources[F].use { alg =>
       for {
         topology <- alg.fetchTopology(req)
         _ <- alg.printJson(topology)
       } yield ()
     }
-  }
 }
 
 @autoInstrument
@@ -46,7 +46,7 @@ trait LambdaHandlerAlg[F[_]] {
 }
 
 object LambdaHandlerAlg {
-  def apply[F[_] : Concurrent : Trace](kmsAlg: KmsAlg[F], httpClient: Client[F]): LambdaHandlerAlg[F] = new LambdaHandlerAlg[F] {
+  def apply[F[_] : Concurrent : Logger : Trace](kmsAlg: KmsAlg[F], httpClient: Client[F]): LambdaHandlerAlg[F] = new LambdaHandlerAlg[F] {
     override def fetchTopology(input: RabbitMQConfig): F[RabbitMqTopology] =
       for {
         password <- kmsAlg.decrypt(input.password).map(tagPassword)
@@ -54,7 +54,7 @@ object LambdaHandlerAlg {
       } yield topology
 
     override def printJson[A: Encoder](a: A): F[Unit] =
-      Sync[F].delay(println(Printer.noSpaces.print(a.asJson)))
+      Logger[F].info(Printer.noSpaces.print(a.asJson))
   }.withTracing
 }
 

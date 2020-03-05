@@ -24,7 +24,7 @@ provider:
     Visibility: internal
 
 package:
-  artifact: target/universal/rabbitmq-topology-backup-0.0.1-SNAPSHOT.zip
+  artifact: target/universal/rabbitmq-topology-backup.zip
 
 functions:
   backup:
@@ -41,7 +41,7 @@ functions:
           description: Hourly back up of RabbitMQ topology to CloudWatch
           rate: rate(1 hour)
           input:
-            baseUri: https://rabbit.us-west-2.${opt:stage}.dwolla.net
+            baseUri: "http://rabbit.us-west-2.${opt:stage}.dwolla.net:15672"
             username: guest
             password: ${self:custom.Credentials.${opt:stage}}
 

@@ -10,8 +10,9 @@ object TestRunner extends App {
   val logger = LoggerFactory.getLogger("TestRunner")
 
   val input: InputStream = new ByteArrayInputStream(
+//             "baseUri": "http://localhost:15672",
     json"""{
-             "hostname": "https://rabbit.us-west-2.devint.dwolla.net",
+             "baseUri": "http://rabbit.us-west-2.devint.dwolla.net:15672",
              "username": "guest",
              "password": "AQICAHh38+DAqADvcRLU4+t2AYhr82YbZuuFQdjdX95NTppHhwHd8XtgUIF6t8gP+mKlCrizAAAAYzBhBgkqhkiG9w0BBwagVDBSAgEAME0GCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMuvCOEA4D/QGIaihbAgEQgCATYPnSoUh0UI+QsqlR00kP7cGLdyh6fUrfBv7Gzt8ToA=="
            }""".noSpaces.getBytes)
@@ -20,5 +21,5 @@ object TestRunner extends App {
 
   new LambdaHandler().handleRequest(input, output, null)
 
-  logger.info("{}", output)
+  logger.info("{}", output.size())
 }
