@@ -37,7 +37,7 @@ lazy val `rabbitmq-topology-backup` = (project in file("."))
       Seq(
         "com.amazonaws" % "aws-xray-recorder-sdk-core" % amazonXRayVersion,
         "com.amazonaws" % "aws-xray-recorder-sdk-aws-sdk-v2-instrumentor" % amazonXRayVersion,
-        "software.amazon.awssdk" % "kms" % "2.7.18",
+        "software.amazon.awssdk" % "kms" % "2.7.36",
         "com.dwolla" %% "fs2-aws-java-sdk2" % fs2AwsVersion,
         "com.dwolla" %% "fs2-aws-lambda-io-app" % fs2AwsVersion,
         "org.http4s" %% "http4s-ember-client" % http4sVersion,
