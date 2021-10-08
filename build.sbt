@@ -5,7 +5,7 @@ lazy val buildSettings = Seq(
   description := "Connect to the RabbitMQ API and download the current exchange/queue topology",
   licenses += ("MIT", url("http://opensource.org/licenses/MIT")),
   startYear := Option(2019),
-  addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.11.3" cross CrossVersion.full),
+  addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.13.2" cross CrossVersion.full),
   addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1"),
   resolvers ++= Seq(
     Resolver.bintrayRepo("dwolla", "maven"),
