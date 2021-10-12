@@ -35,7 +35,7 @@ lazy val `rabbitmq-topology-backup` = (project in file("."))
   .settings(buildSettings: _*)
   .settings(
     libraryDependencies ++= {
-      val http4sVersion = "0.21.1"
+      val http4sVersion = "0.21.31"
       val circeVersion = "0.13.0"
       val fs2AwsVersion = "2.0.0-M9"
       val amazonXRayVersion = "2.4.0"
