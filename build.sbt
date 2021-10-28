@@ -7,15 +7,10 @@ lazy val buildSettings = Seq(
   startYear := Option(2019),
   addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.13.2" cross CrossVersion.full),
   addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1"),
-  resolvers ++= Seq(
-    Resolver.bintrayRepo("dwolla", "maven"),
-    Resolver.bintrayRepo("dwolla", "maven-forks"),
-    Resolver.sonatypeRepo("releases"),
-  ),
-  mappings in (Compile, packageDoc) := Seq(),
-  publishArtifact in (Compile, packageDoc) := false,
+  Compile / packageDoc / mappings := Seq(),
+  Compile / packageDoc / publishArtifact := false,
   topLevelDirectory := None,
-  packageName in Universal := name.value,
+  Universal / packageName := name.value,
   Compile / scalacOptions ++= {
     CrossVersion.partialVersion(scalaVersion.value) match {
       case Some((2, n)) if n >= 13 => "-Ymacro-annotations" :: Nil
