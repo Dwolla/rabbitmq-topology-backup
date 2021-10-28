@@ -15,12 +15,12 @@ import io.chrisdavenport.log4cats.Logger
 import io.circe._
 import io.circe.syntax._
 import natchez._
-import natchez.awsxray._
+import natchez.noop._
 import org.http4s.client.Client
 import org.http4s.ember.client._
 
 class LambdaHandler extends IOLambda[RabbitMQConfig, Unit] {
-  override val tracingEntryPoint: Resource[IO, EntryPoint[IO]] = AWSXRayTracer.entryPoint[IO]
+  override val tracingEntryPoint: Resource[IO, EntryPoint[IO]] = Resource.pure[IO, EntryPoint[IO]](NoopEntrypoint[IO]())
 
   private def resources[F[_] : Concurrent : ContextShift : Logger : Timer : Trace]: Resource[F, LambdaHandlerAlg[F]] =
     for {

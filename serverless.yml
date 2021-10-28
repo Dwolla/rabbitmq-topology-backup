@@ -2,7 +2,7 @@ service: rabbitmq-topology-backup
 
 provider:
   name: aws
-  runtime: java8
+  runtime: java11
   memorySize: 3008
   timeout: 900
   region: us-west-2
