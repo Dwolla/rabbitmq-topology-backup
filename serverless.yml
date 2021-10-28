@@ -15,6 +15,14 @@ provider:
       Action: kms:Decrypt
       Resource:
         Fn::GetAtt: [EncryptionKey, Arn]
+    - Effect: "Allow" # xray permissions (required)
+      Action:
+        - "xray:PutTraceSegments"
+        - "xray:PutTelemetryRecords"
+      Resource:
+        - "*"
+  tracing:
+    lambda: Active
   logRetentionInDays: 7
   stackTags:
     Creator: serverless
