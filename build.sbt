@@ -4,7 +4,7 @@ ThisBuild / description := "Connect to the RabbitMQ API and download the current
 ThisBuild / licenses += ("MIT", url("http://opensource.org/licenses/MIT"))
 ThisBuild / startYear := Option(2019)
 ThisBuild / scalaVersion := "2.13.6"
-ThisBuild / githubWorkflowJavaVersions := Seq("adopt@1.8")
+ThisBuild / githubWorkflowJavaVersions := Seq("adopt@1.11", "adopt@1.8")
 ThisBuild / githubWorkflowBuild := Seq(WorkflowStep.Sbt(List("test", "Universal / packageBin"), name = Option("Build, Test, and Package")))
 ThisBuild / githubWorkflowPublishTargetBranches := Nil
 ThisBuild / developers ++= List(
