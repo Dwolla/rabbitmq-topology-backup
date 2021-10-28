@@ -34,6 +34,7 @@ lazy val `rabbitmq-topology-backup` = (project in file("."))
       val circeVersion = "0.14.1"
       val fs2AwsVersion = "2.0.0-M12"
       val amazonXRayVersion = "2.10.0"
+      val natchezVersion = "0.0.26"
       Seq(
         "com.amazonaws" % "aws-xray-recorder-sdk-core" % amazonXRayVersion,
         "com.amazonaws" % "aws-xray-recorder-sdk-aws-sdk-v2-instrumentor" % amazonXRayVersion,
@@ -43,7 +44,9 @@ lazy val `rabbitmq-topology-backup` = (project in file("."))
         "org.http4s" %% "http4s-ember-client" % http4sVersion,
         "org.http4s" %% "http4s-circe" % http4sVersion,
         "org.http4s" %% "http4s-dsl" % http4sVersion,
-        "com.dwolla" %% "natchez-aws-xray" % "0.0.1",
+        "org.tpolecat" %% "natchez-core" % natchezVersion,
+        "org.tpolecat" %% "natchez-noop" % natchezVersion,
+        "org.typelevel" %% "cats-tagless-macros" % "0.11",
         "com.dwolla" %% "testutils-scalatest-fs2" % "2.0.0-M6" % Test,
         "org.http4s" %% "http4s-server" % http4sVersion % Test,
         "io.circe" %% "circe-literal" % circeVersion % Test,
