@@ -1,12 +1,14 @@
 package com.dwolla.rabbitmq.topology
 
 import cats._
+import cats.data.OptionT
 import cats.effect._
 import cats.implicits._
 import cats.tagless._
 import cats.tagless.diagnosis._
 import cats.tagless.implicits._
 import com.amazonaws.services.lambda.runtime.Context
+import com.comcast.ip4s._
 import com.dwolla.fs2aws.kms.KmsAlg
 import com.dwolla.lambda._
 import com.dwolla.rabbitmq.topology.WithTracingOps._
@@ -20,7 +22,17 @@ import org.http4s.client.Client
 import org.http4s.ember.client._
 
 class LambdaHandler extends IOLambda[RabbitMQConfig, Unit] {
-  override val tracingEntryPoint: Resource[IO, EntryPoint[IO]] = XRay.entryPoint[IO]()
+  private def getXRayDaemonAddress[F[_] : Sync]: F[Option[SocketAddress[IpAddress]]] =
+    OptionT(Sync[F].delay(sys.props.get("AWS_XRAY_DAEMON_ADDRESS")))
+      .subflatMap(SocketAddress.fromStringIp)
+      .value
+
+  override val tracingEntryPoint: Resource[IO, EntryPoint[IO]] =
+    Resource.eval(getXRayDaemonAddress[IO])
+      .flatMap {
+        case Some(SocketAddress(host, port)) => XRay.entryPoint[IO](host.toUriString, port.value)
+        case None => XRay.entryPoint[IO]()
+      }
 
   private def resources[F[_] : Concurrent : ContextShift : Logger : Timer : Trace]: Resource[F, LambdaHandlerAlg[F]] =
     for {
