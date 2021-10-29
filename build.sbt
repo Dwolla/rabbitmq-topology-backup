@@ -20,7 +20,7 @@ lazy val `rabbitmq-topology-backup` = (project in file("."))
       val circeVersion = "0.14.1"
       val fs2AwsVersion = "2.0.0-M12"
       val amazonXRayVersion = "2.10.0"
-      val natchezVersion = "0.0.26"
+      val natchezVersion = "0.1.5"
       Seq(
         "com.amazonaws" % "aws-xray-recorder-sdk-core" % amazonXRayVersion,
         "com.amazonaws" % "aws-xray-recorder-sdk-aws-sdk-v2-instrumentor" % amazonXRayVersion,
