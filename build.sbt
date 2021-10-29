@@ -36,7 +36,7 @@ lazy val `rabbitmq-topology-backup` = (project in file("."))
         "org.http4s" %% "http4s-server" % http4sVersion % Test,
         "io.circe" %% "circe-literal" % circeVersion % Test,
         "io.circe" %% "circe-parser" % circeVersion % Test,
-        "io.chrisdavenport" %% "log4cats-slf4j" % "1.1.1" % Test,
+        "org.typelevel" %% "log4cats-slf4j" % "1.2.0" % Test,
       )
     },
     addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.13.2" cross CrossVersion.full),
