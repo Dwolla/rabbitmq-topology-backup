@@ -32,7 +32,7 @@ lazy val `rabbitmq-topology-backup` = (project in file("."))
         "org.http4s" %% "http4s-dsl" % http4sVersion,
         "org.tpolecat" %% "natchez-core" % natchezVersion,
         "org.typelevel" %% "cats-tagless-macros" % "0.11",
-        "com.comcast" %% "ip4s-core" % "2.0.4",
+        "com.comcast" %% "ip4s-core" % "3.1.1",
         "com.dwolla" %% "testutils-scalatest-fs2" % "2.0.0-M6" % Test,
         "org.http4s" %% "http4s-server" % http4sVersion % Test,
         "io.circe" %% "circe-literal" % circeVersion % Test,
