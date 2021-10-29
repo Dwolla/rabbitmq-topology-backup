@@ -6,7 +6,7 @@ import cats.effect._
 import com.dwolla.rabbitmq.topology.RabbitMqTopologyAlg.RabbitMqTopologyAlgImpl
 import com.dwolla.rabbitmq.topology.model.{Password, Username}
 import com.dwolla.testutils.IOSpec
-import io.chrisdavenport.log4cats.Logger
+import org.typelevel.log4cats.Logger
 import io.circe.Json
 import io.circe.literal._
 import org.http4s._

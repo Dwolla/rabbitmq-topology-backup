@@ -11,7 +11,7 @@ import com.dwolla.fs2aws.kms.KmsAlg
 import com.dwolla.lambda._
 import com.dwolla.rabbitmq.topology.WithTracingOps._
 import com.dwolla.rabbitmq.topology.model._
-import io.chrisdavenport.log4cats.Logger
+import org.typelevel.log4cats.Logger
 import io.circe._
 import io.circe.syntax._
 import natchez._

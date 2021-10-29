@@ -4,7 +4,7 @@ import cats.effect._
 import cats.implicits._
 import cats.tagless.{autoFunctorK, autoInstrument}
 import com.dwolla.rabbitmq.topology.model._
-import io.chrisdavenport.log4cats.Logger
+import org.typelevel.log4cats.Logger
 import io.circe._
 import org.http4s._
 import org.http4s.circe._
