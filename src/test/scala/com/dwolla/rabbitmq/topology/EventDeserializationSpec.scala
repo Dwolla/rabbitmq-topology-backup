@@ -1,17 +1,14 @@
 package com.dwolla.rabbitmq.topology
 
 import com.dwolla.rabbitmq.topology.model.{RabbitMQConfig, Username}
+import com.eed3si9n.expecty.Expecty.expect
 import io.circe.literal._
+import munit.CatsEffectSuite
 import org.http4s.syntax.all._
-import org.scalatest.EitherValues
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers
 
-class EventDeserializationSpec extends AnyFlatSpec with Matchers with EitherValues {
+class EventDeserializationSpec extends CatsEffectSuite {
 
-  behavior of "event deserialization"
-
-  it should "deserialize an example event" in {
+  test("event deserialization should deserialize an example event") {
     val input =
       json"""{
                "baseUri": "https://rabbit.us-west-2.local.dwolla.net",
@@ -20,7 +17,7 @@ class EventDeserializationSpec extends AnyFlatSpec with Matchers with EitherValu
              }"""
 
     val expected = RabbitMQConfig(uri"https://rabbit.us-west-2.local.dwolla.net", "guest".asInstanceOf[Username], "password")
-    input.as[RabbitMQConfig].contains(expected) should be(true)
+    expect(input.as[RabbitMQConfig].contains(expected))
   }
 
 }

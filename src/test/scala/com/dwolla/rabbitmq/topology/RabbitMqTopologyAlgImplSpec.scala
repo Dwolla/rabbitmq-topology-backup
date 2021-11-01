@@ -5,10 +5,10 @@ import cats.data._
 import cats.effect._
 import com.dwolla.rabbitmq.topology.RabbitMqTopologyAlg.RabbitMqTopologyAlgImpl
 import com.dwolla.rabbitmq.topology.model.{Password, Username}
-import com.dwolla.testutils.IOSpec
-import io.chrisdavenport.log4cats.Logger
+import com.eed3si9n.expecty.Expecty.expect
 import io.circe.Json
 import io.circe.literal._
+import munit.CatsEffectSuite
 import org.http4s._
 import org.http4s.circe._
 import org.http4s.client.Client
@@ -18,10 +18,9 @@ import org.http4s.server.AuthMiddleware
 import org.http4s.server.middleware.VirtualHost
 import org.http4s.server.middleware.VirtualHost.exact
 import org.http4s.syntax.all._
-import org.scalatest.ParallelTestExecution
-import org.scalatest.matchers.should.Matchers
+import org.typelevel.log4cats.Logger
 
-class RabbitMqTopologyAlgImplSpec extends IOSpec with Matchers with Http4sDsl[IO] with ParallelTestExecution {
+class RabbitMqTopologyAlgImplSpec extends CatsEffectSuite with Http4sDsl[IO] {
   import FakeRabbitMqService._
 
   implicit def logger: Logger[IO] = NoOpLogger[IO]
@@ -29,18 +28,16 @@ class RabbitMqTopologyAlgImplSpec extends IOSpec with Matchers with Http4sDsl[IO
   def workingAlg(resp: Json): RabbitMqTopologyAlg[IO] =
     new RabbitMqTopologyAlgImpl[IO](client(okDefinitions(resp)), correctBaseUri, correctUsername, correctPassword)
 
-  behavior of "RabbitMqTopologyAlgImpl"
-
-  it should "fetch the definitions API and return the results as a JSON object" inIO {
+  test("RabbitMqTopologyAlgImpl should fetch the definitions API and return the results as a JSON object") {
     val resp = json"""{}"""
 
     val output = workingAlg(resp)
       .retrieveTopology
 
-    output.map(_ should be(resp))
+    output.map(x => expect(x == resp))
   }
 
-  it should "redact any password fields" inIO {
+  test("RabbitMqTopologyAlgImpl should redact any password fields") {
     val resp =
       json"""
           {
@@ -87,7 +84,7 @@ class RabbitMqTopologyAlgImplSpec extends IOSpec with Matchers with Http4sDsl[IO
     val output = workingAlg(resp)
       .retrieveTopology
 
-    output.map(_ should be(expected))
+    output.map(x => expect(x == expected))
   }
 
 }
@@ -107,7 +104,7 @@ object FakeRabbitMqService extends Http4sDsl[IO] {
   private val authUser: Kleisli[OptionT[IO, *], Request[IO], String] =
     Kleisli { req: Request[IO] =>
       for {
-        Authorization(BasicCredentials(user, pass)) <- req.headers.get(Authorization)
+        Authorization(BasicCredentials(user, pass)) <- req.headers.get[Authorization]
         if user == correctUsername && pass == correctPassword
       } yield correctUsername
     }.mapF(OptionT.fromOption[IO](_))

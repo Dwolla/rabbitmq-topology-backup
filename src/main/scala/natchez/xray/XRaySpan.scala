@@ -6,24 +6,24 @@
 
 package natchez.xray
 
-import cats.Functor
-import cats.effect.ExitCase._
 import cats.effect._
 import cats.syntax.all._
+import cats.effect.Resource.ExitCase
+
 import natchez._
 import natchez.TraceValue._
 import cats.effect.Resource
-import cats.effect.concurrent.Ref
-
 import java.net.URI
 import java.time.Instant
 import io.circe.JsonObject
-import io.circe.{Error => _, _}
+import cats.effect.std.Random
+import io.circe._
 import io.circe.syntax._
+import cats.effect.kernel.Resource.ExitCase.Canceled
+import cats.effect.kernel.Resource.ExitCase.Errored
+import cats.effect.kernel.Resource.ExitCase.Succeeded
 
-import scala.concurrent.duration.MILLISECONDS
-
-private[xray] final case class XRaySpan[F[_]: Sync : Timer](
+private[xray] final case class XRaySpan[F[_]: Sync](
                                                      entry: XRayEntryPoint[F],
                                                      name: String,
                                                      segmentId: String,
@@ -58,7 +58,7 @@ private[xray] final case class XRaySpan[F[_]: Sync : Timer](
   private def toEpoch(t: Instant): Double =
     t.getEpochSecond().toDouble + t.getNano().toDouble / 1000000000
 
-  def serialize(end: Instant, exitCase: ExitCase[Throwable]): F[JsonObject] =
+  def serialize(end: Instant, exitCase: ExitCase): F[JsonObject] =
     (fields.get, children.get, XRaySpan.segmentId).mapN { (fs, cs, id) =>
       def exitFields(ex: Throwable): List[(String, Json)] = List(
         "fault" -> true.asJson,
@@ -94,9 +94,9 @@ private[xray] final case class XRaySpan[F[_]: Sync : Timer](
           "annotations" -> fs.asJson
         ) ++ {
           exitCase match {
-            case Canceled => List("fault" -> true.asJson)
-            case Error(e) => exitFields(e)
-            case Completed => List()
+            case Canceled   => List("fault" -> true.asJson)
+            case Errored(e) => exitFields(e)
+            case Succeeded  => List()
           }
         }
 
@@ -153,23 +153,23 @@ private[xray] object XRaySpan {
       )
   }
 
-  private def randomHexString[F[_]: Sync](bytes: Int): F[String] = Sync[F].delay {
-    scala.util.Random.nextBytes(bytes)
-  }
-    .map(BigInt(1, _).toString(16).reverse.padTo(bytes * 2, '0').reverse)
+  private def now[F[_]: Sync]: F[Instant] =
+    Sync[F].delay(Instant.now)
+
+  private def randomHexString[F[_]: Sync](bytes: Int): F[String] =
+    Random.scalaUtilRandom
+      .flatMap(_.nextBytes(bytes))
+      .map(x => BigInt(1, x).toString(16).reverse.padTo(bytes * 2, '0').reverse)
 
   private def segmentId[F[_]: Sync]: F[String] =
     randomHexString(8)
 
-  private def now[F[_] : Timer : Functor]: F[Instant] =
-    Clock[F].realTime(MILLISECONDS).map(Instant.ofEpochMilli _)
-
-  private def traceId[F[_]: Sync : Timer]: F[String] = for {
+  private def traceId[F[_]: Sync]: F[String] = for {
     t <- now
     r <- randomHexString(12)
   } yield s"1-${t.getEpochSecond.toHexString}-$r"
 
-  def fromHeader[F[_]: Sync : Timer](
+  def fromHeader[F[_]: Sync](
                               name: String,
                               header: XRayHeader,
                               entry: XRayEntryPoint[F]
@@ -190,7 +190,7 @@ private[xray] object XRaySpan {
     sampled = header.sampled
   )
 
-  def fromKernel[F[_]: Sync : Timer](
+  def fromKernel[F[_]: Sync](
                               name: String,
                               kernel: Kernel,
                               entry: XRayEntryPoint[F]
@@ -201,7 +201,7 @@ private[xray] object XRaySpan {
       .map(x => fromHeader(name, x, entry))
       .get
 
-  def fromKernelOrElseRoot[F[_]: Sync : Timer](
+  def fromKernelOrElseRoot[F[_]: Sync](
                                         name: String,
                                         kernel: Kernel,
                                         entry: XRayEntryPoint[F]
@@ -212,7 +212,7 @@ private[xray] object XRaySpan {
       .map(x => fromHeader(name, x, entry))
       .getOrElse(root(name, entry))
 
-  def root[F[_]: Sync : Timer](name: String, entry: XRayEntryPoint[F]): F[XRaySpan[F]] =
+  def root[F[_]: Sync](name: String, entry: XRayEntryPoint[F]): F[XRaySpan[F]] =
     for {
       sId <- segmentId
       tId <- traceId
@@ -231,7 +231,7 @@ private[xray] object XRaySpan {
       sampled = true
     )
 
-  def child[F[_]: Sync : Timer](parent: XRaySpan[F], name: String): F[XRaySpan[F]] =
+  def child[F[_]: Sync](parent: XRaySpan[F], name: String): F[XRaySpan[F]] =
     for {
       sId <- segmentId
       t <- now
@@ -249,10 +249,10 @@ private[xray] object XRaySpan {
       sampled = parent.sampled
     )
 
-  def finish[F[_]: Sync : Timer](
+  def finish[F[_]: Sync](
                           span: XRaySpan[F],
                           entryPoint: XRayEntryPoint[F],
-                          exitCase: ExitCase[Throwable]
+                          exitCase: ExitCase
                         ): F[Unit] = for {
     t <- now
     j <- span.serialize(t, exitCase)

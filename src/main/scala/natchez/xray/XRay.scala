@@ -8,18 +8,19 @@ package natchez
 package xray
 
 import natchez.EntryPoint
-import cats.effect._
-import java.net.DatagramSocket
+import cats.effect.{Resource, Sync}
+import com.comcast.ip4s._
+import fs2.io.net.Network
 
 object XRay {
 
-  def entryPoint[F[_]: Sync : Timer](
-                              host: String = "localhost",
-                              port: Int = 2000
-                            ): Resource[F, EntryPoint[F]] =
-    Resource
-      .make(Sync[F].delay(new DatagramSocket()))(x => Sync[F].delay(x.close()))
+  def entryPoint[F[_]: Sync: Network](
+                                       daemonAddress: SocketAddress[IpAddress] =
+                                       SocketAddress(ip"127.0.0.1", port"2000")
+                                     ): Resource[F, EntryPoint[F]] =
+    Network[F]
+      .openDatagramSocket()
       .map { socket =>
-        new XRayEntryPoint[F](socket, host, port)
+        new XRayEntryPoint[F](socket, daemonAddress)
       }
 }

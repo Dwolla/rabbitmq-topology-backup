@@ -7,26 +7,23 @@
 package natchez
 package xray
 
-import java.net.DatagramSocket
 import cats.effect._
 import cats.syntax.all._
-import java.net.InetAddress
+import fs2.Chunk
+import fs2.io.net.{DatagramSocket, Datagram}
 import io.circe._
 import io.circe.syntax._
-import java.net.DatagramPacket
+import com.comcast.ip4s._
 
-final class XRayEntryPoint[F[_]: Sync : Timer](
-                                        socket: DatagramSocket,
-                                        host: String,
-                                        port: Int
+final class XRayEntryPoint[F[_]: Sync](
+                                        socket: DatagramSocket[F],
+                                        daemonAddress: SocketAddress[IpAddress]
                                       ) extends EntryPoint[F] {
-
-  val addr = InetAddress.getByName(host)
 
   def sendSegment(foo: JsonObject): F[Unit] = {
     val payload = (XRayEntryPoint.header + foo.asJson.noSpaces).getBytes()
-    val packet = new DatagramPacket(payload, payload.length, addr, port)
-    Sync[F].delay(socket.send(packet))
+    val datagram = Datagram(daemonAddress, Chunk.array(payload))
+    socket.write(datagram)
   }
 
   def make(span: F[XRaySpan[F]]): Resource[F, Span[F]] =
