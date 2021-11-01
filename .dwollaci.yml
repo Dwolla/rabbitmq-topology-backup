@@ -6,6 +6,7 @@ stages:
     filesToStash:
       - serverless.yml
       - .nvmrc
+      - .env
       - target/universal/**
   deployDevInt:
     nodeLabel: nvm-deployer
