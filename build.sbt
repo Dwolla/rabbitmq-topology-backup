@@ -18,26 +18,28 @@ lazy val `rabbitmq-topology-backup` = (project in file("."))
     libraryDependencies ++= {
       val http4sVersion = "0.23.6"
       val circeVersion = "0.14.1"
-      val fs2AwsVersion = "2.0.0-M12"
-      val amazonXRayVersion = "2.10.0"
-      val natchezVersion = "0.0.26"
+      val natchezVersion = "0.1.5"
+      val fs2Version = "3.2.2"
       Seq(
-        "com.amazonaws" % "aws-xray-recorder-sdk-core" % amazonXRayVersion,
-        "com.amazonaws" % "aws-xray-recorder-sdk-aws-sdk-v2-instrumentor" % amazonXRayVersion,
         "software.amazon.awssdk" % "kms" % "2.7.36",
-        "com.dwolla" %% "fs2-aws-java-sdk2" % fs2AwsVersion,
-        "com.dwolla" %% "fs2-aws-lambda-io-app" % fs2AwsVersion,
+        "com.armanbilge" %% "feral-lambda" % "0.1-6b05f5a",
         "org.http4s" %% "http4s-ember-client" % http4sVersion,
         "org.http4s" %% "http4s-circe" % http4sVersion,
         "org.http4s" %% "http4s-dsl" % http4sVersion,
         "org.tpolecat" %% "natchez-core" % natchezVersion,
-        "org.typelevel" %% "cats-tagless-macros" % "0.11",
-        "com.comcast" %% "ip4s-core" % "2.0.4",
-        "com.dwolla" %% "testutils-scalatest-fs2" % "2.0.0-M6" % Test,
+        "co.fs2" %% "fs2-reactive-streams" % fs2Version,
+        "co.fs2" %% "fs2-io" % fs2Version,
+        "org.typelevel" %% "cats-tagless-macros" % "0.14.0",
+        "com.comcast" %% "ip4s-core" % "3.1.1",
+        "io.circe" %% "circe-generic" % circeVersion,
+        "com.chuusai" %% "shapeless" % "2.3.7",
+        "org.tpolecat" %% "natchez-http4s" % "0.1.3",
+        "org.typelevel" %% "munit-cats-effect-3" % "1.0.6" % Test,
+        "com.eed3si9n.expecty" %% "expecty" % "0.15.4" % Test,
         "org.http4s" %% "http4s-server" % http4sVersion % Test,
         "io.circe" %% "circe-literal" % circeVersion % Test,
         "io.circe" %% "circe-parser" % circeVersion % Test,
-        "io.chrisdavenport" %% "log4cats-slf4j" % "1.1.1" % Test,
+        "org.typelevel" %% "log4cats-slf4j" % "2.1.1" % Test,
       )
     },
     addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.13.2" cross CrossVersion.full),
