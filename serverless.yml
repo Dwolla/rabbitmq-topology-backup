@@ -1,4 +1,5 @@
 service: rabbitmq-topology-backup
+useDotenv: true
 
 provider:
   name: aws
@@ -7,9 +8,9 @@ provider:
   timeout: 900
   region: us-west-2
   deploymentBucket:
-    name: ${opt:bucket}
+    name: ${env:BUCKET}
     serverSideEncryption: "AES256"
-  cfnRole: "arn:aws:iam::${opt:account}:role/cloudformation/deployer/cloudformation-deployer"
+  cfnRole: "arn:aws:iam::${env:ACCOUNT}:role/cloudformation/deployer/cloudformation-deployer"
   iamRoleStatements:
     - Effect: Allow
       Action: kms:Decrypt
@@ -30,6 +31,7 @@ provider:
     Project: ${self:service}
     Team: platform
     Visibility: internal
+  lambdaHashingVersion: "20201221"
 
 package:
   artifact: target/universal/rabbitmq-topology-backup.zip
