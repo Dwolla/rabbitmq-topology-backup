@@ -18,15 +18,17 @@ lazy val `rabbitmq-topology-backup` = (project in file("."))
     libraryDependencies ++= {
       val http4sVersion = "0.23.6"
       val circeVersion = "0.14.1"
-      val natchezVersion = "0.1.5"
+      val natchezVersion = "0.1.5+47-0f7e4bf4-SNAPSHOT"
       val fs2Version = "3.2.2"
       Seq(
         "software.amazon.awssdk" % "kms" % "2.17.77",
-        "com.armanbilge" %% "feral-lambda" % "0.1-6b05f5a",
+        "org.typelevel" %% "feral-lambda" % "0.1-6c22387-SNAPSHOT",
         "org.http4s" %% "http4s-ember-client" % http4sVersion,
         "org.http4s" %% "http4s-circe" % http4sVersion,
         "org.http4s" %% "http4s-dsl" % http4sVersion,
         "org.tpolecat" %% "natchez-core" % natchezVersion,
+        "org.tpolecat" %% "natchez-xray" % natchezVersion,
+        "org.tpolecat" %% "natchez-noop" % natchezVersion,
         "co.fs2" %% "fs2-reactive-streams" % fs2Version,
         "co.fs2" %% "fs2-io" % fs2Version,
         "org.typelevel" %% "cats-tagless-macros" % "0.14.0",

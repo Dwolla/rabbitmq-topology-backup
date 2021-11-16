@@ -1,6 +1,7 @@
 package com.dwolla.rabbitmq.topology
 
 import cats._
+import cats.data.Kleisli
 import cats.syntax.all._
 import cats.effect.{Trace => _, _}
 import cats.tagless._
@@ -8,52 +9,46 @@ import com.dwolla.aws.kms.KmsAlg
 import com.dwolla.rabbitmq.topology.WithTracingOps._
 import com.dwolla.rabbitmq.topology.model._
 import feral.lambda
-import feral.lambda.IOLambda
+import feral.lambda.{Context, IOLambda}
 import io.circe._
 import io.circe.syntax._
 import natchez._
-import natchez.xray.{XRay, XRayEnvironment}
 import org.http4s.client.Client
 import org.http4s.ember.client._
 import org.typelevel.log4cats.Logger
 import cats.tagless.syntax.all._
 import cats.tagless.aop._
-import natchez.Trace.ioTrace
+import feral.lambda.tracing.XRayTracedLambda
 import natchez.http4s.NatchezMiddleware
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 class LambdaHandler extends IOLambda[RabbitMQConfig, Unit] {
-  override type Setup = (KmsAlg[IO], Client[IO])
-
   val lambdaName = "RabbitMQ-Topology-Backup"
 
-  private def traceResource: Resource[IO, Trace[IO]] =
-    Resource.eval(XRayEnvironment[IO].daemonAddress)
-      .flatMap {
-        case Some(addr) => XRay.entryPoint[IO](addr)
-        case None => XRay.entryPoint[IO]()
+  def handler[F[_] : Async : Trace]: Resource[F, lambda.Lambda[F, RabbitMQConfig, Unit]] =
+    KmsAlg
+      .resource[F]
+      .map(_.withTracing)
+      .flatMap { kms =>
+        EmberClientBuilder
+          .default[F]
+          .build
+          .map(NatchezMiddleware.client(_))
+          .evalMap { http =>
+            Slf4jLogger.fromName[F](lambdaName).map { implicit logger =>
+              val alg = LambdaHandlerAlg(kms, http)
+
+              (event: RabbitMQConfig, _: Context[F]) =>
+                for {
+                  topology <- alg.fetchTopology(event)
+                  _ <- alg.printJson(topology)
+                } yield none[Unit]
+            }
+          }
       }
-      .evalMap(XRayEnvironment[IO].kernelFromEnvironment.tupleLeft(_))
-      .flatMap { case (ep, kernel) => ep.continueOrElseRoot(lambdaName, kernel) }
-      .evalMap(ioTrace)
 
-  override protected def setup: Resource[IO, Setup] =
-    for {
-      kms <- KmsAlg.resource[IO]
-      http <- EmberClientBuilder.default[IO].build
-    } yield (kms, http)
-
-  override def apply(event: RabbitMQConfig, context: lambda.Context, setup: Setup): IO[Option[Unit]] =
-    Slf4jLogger.fromName[IO](lambdaName).flatMap { implicit logger =>
-      traceResource.use { implicit trace =>
-        val alg = LambdaHandlerAlg[IO](setup._1.withTracing, NatchezMiddleware.client(setup._2))
-
-        for {
-          topology <- alg.fetchTopology(event)
-          _ <- alg.printJson(topology)
-        } yield None
-      }
-    }
+  override def run: Resource[IO, lambda.Lambda[IO, RabbitMQConfig, Unit]] =
+    XRayTracedLambda(handler[Kleisli[IO, Span[IO], *]])
 }
 
 @autoInstrument
