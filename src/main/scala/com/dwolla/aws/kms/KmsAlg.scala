@@ -3,6 +3,7 @@ package com.dwolla.aws.kms
 import cats.effect._
 import cats.implicits._
 import cats.tagless._
+import cats.tagless.aop.Instrument
 import com.dwolla.aws.AwsEval.eval
 import software.amazon.awssdk.services.kms._
 import software.amazon.awssdk.core.SdkBytes
@@ -11,13 +12,14 @@ import software.amazon.awssdk.utils.BinaryUtils
 
 import scala.util.Try
 
-@autoFunctorK
-@autoInstrument
 trait KmsAlg[F[_]] {
   def decrypt(string: String): F[String]
 }
 
 object KmsAlg {
+  implicit val KmsAlgInstrument: Instrument[KmsAlg] = Derive.instrument
+  implicit val KmsAlgFunctorK: FunctorK[KmsAlg] = Derive.functorK
+
   private def acquireKmsClient[F[_] : Sync]: F[KmsAsyncClient] =
     Sync[F].delay(KmsAsyncClient.builder().build())
 
