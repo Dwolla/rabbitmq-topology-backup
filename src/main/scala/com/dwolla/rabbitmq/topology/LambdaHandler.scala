@@ -48,6 +48,6 @@ class LambdaHandler extends IOLambda[RabbitMQConfig, INothing] {
       }
 
   override def run: Resource[IO, lambda.Lambda[IO, RabbitMQConfig, INothing]] =
-    handler[IO, Kleisli[IO, Span[IO], *]].flatMap(XRayTracedLambda.usingEnvironment(_))
+    handler[IO, Kleisli[IO, Span[IO], *]].flatMap(XRayTracedLambda(_))
 
 }
