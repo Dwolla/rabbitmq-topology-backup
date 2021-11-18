@@ -1,5 +1,6 @@
 package com.dwolla.rabbitmq.topology
 
+import cats.Monad
 import cats.data.Kleisli
 import cats.effect.{Trace => _, _}
 import cats.syntax.all._
@@ -34,16 +35,19 @@ class LambdaHandler extends IOLambda[RabbitMQConfig, INothing] {
             Slf4jLogger.fromName[F](lambdaName)
               .map(implicit logger => LambdaHandlerAlg(kms, http))
           }
-          .map { alg =>
-            (event: RabbitMQConfig, _: Context[F]) =>
-              for {
-                topology <- alg.fetchTopology(event)
-                _ <- alg.printJson(topology)
-              } yield none
-          }
+          .map(LambdaHandler(_))
       }
 
   override def run: Resource[IO, lambda.Lambda[IO, RabbitMQConfig, INothing]] =
     XRayTracedLambda(handler[Kleisli[IO, Span[IO], *]])
 
+}
+
+object LambdaHandler {
+  def apply[F[_] : Monad](alg: LambdaHandlerAlg[F]): lambda.Lambda[F, RabbitMQConfig, INothing] =
+    (event: RabbitMQConfig, _: Context[F]) =>
+      for {
+        topology <- alg.fetchTopology(event)
+        _ <- alg.printJson(topology)
+      } yield none
 }
