@@ -33,10 +33,10 @@ object RabbitMqTopologyAlg {
   private def redactPasswordFields(j: Json): Json =
     j.fold(j, Json.fromBoolean, Json.fromJsonNumber, Json.fromString, a => Json.fromValues(a.map(redactPasswordFields)), redactPasswordFields)
 
-  def apply[F[_] : Async : Trace](client: Client[F],
-                                  baseUri: Uri,
-                                  username: Username,
-                                  password: Password): RabbitMqTopologyAlg[F] =
+  def apply[F[_] : Concurrent : Trace](client: Client[F],
+                                       baseUri: Uri,
+                                       username: Username,
+                                       password: Password): RabbitMqTopologyAlg[F] =
     (new RabbitMqTopologyAlgImpl[F](client, baseUri, username, password): RabbitMqTopologyAlg[F]).withTracing
 
   private[topology] class RabbitMqTopologyAlgImpl[F[_] : Concurrent](httpClient: Client[F],

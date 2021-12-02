@@ -1,53 +1,103 @@
 package com.dwolla.rabbitmq.topology
 
-import cats.Monad
+import cats.Functor
 import cats.data.Kleisli
+import cats.effect.std.Random
 import cats.effect.{Trace => _, _}
 import cats.syntax.all._
+import cats.tagless.FunctorK.ops.toAllFunctorKOps
 import com.dwolla.aws.kms.KmsAlg
+import com.dwolla.rabbitmq.topology.LambdaHandler.nothingEncoder
 import com.dwolla.rabbitmq.topology.model._
-import feral.lambda
-import feral.lambda.tracing.XRayTracedLambda
-import feral.lambda.{Context, IOLambda}
-import feral.lambda.IOLambda._
+import com.dwolla.tracing._
+import feral.lambda.natchez.{AwsTags, KernelSource}
+//import feral.lambda.natchez.TracedLambda
+import feral.lambda.{IOLambda, LambdaEnv}
+import fs2.INothing
+import io.circe.Encoder
 import natchez._
 import natchez.http4s.NatchezMiddleware
-import org.http4s.client.middleware
+import natchez.xray.XRay
+import org.http4s.client.{Client, middleware}
 import org.http4s.ember.client._
+import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
-import com.dwolla.tracing._
-import fs2.INothing
+
+import scala.annotation.nowarn
 
 class LambdaHandler extends IOLambda[RabbitMQConfig, INothing] {
   val lambdaName = "RabbitMQ-Topology-Backup"
 
-  def handler[F[_] : Async : Trace]: Resource[F, lambda.Lambda[F, RabbitMQConfig, INothing]] =
-    KmsAlg
-      .resource[F]
-      .map(_.withTracing)
-      .flatMap { kms =>
-        EmberClientBuilder
-          .default[F]
-          .build
-          .map(middleware.Logger[F](logHeaders = true, logBody = false))
-          .map(NatchezMiddleware.client(_))
-          .evalMap { http =>
-            Slf4jLogger.fromName[F](lambdaName)
-              .map(implicit logger => LambdaHandlerAlg(kms, http))
+  private implicit def kleisliLogger[F[_] : Logger, A]: Logger[Kleisli[F, A, *]] = Logger[F].mapK(Kleisli.liftK)
+
+  private implicit def kleisliLambdaEnv[F[_] : Functor, A, B](implicit env: LambdaEnv[F, A]): LambdaEnv[Kleisli[F, B, *], A] =
+    env.mapK(Kleisli.liftK)
+
+  private def httpClient[F[_] : Async]: Resource[F, Client[F]] =
+    EmberClientBuilder
+      .default[F]
+      .build
+      .map(middleware.Logger[F](logHeaders = true, logBody = false))
+
+  private def resources[F[_] : Async] =
+    Resource.eval(Random.scalaUtilRandom[F]).flatMap { implicit random =>
+      (XRay.entryPoint[F](), KmsAlg.resource[F], httpClient[F]).tupled
+    }
+
+  private def handlerF[F[_] : Async]: Resource[F, LambdaEnv[F, RabbitMQConfig] => F[Option[INothing]]] =
+    resources[F].flatMap { case (ep, kms, http) =>
+      Resource.eval(Slf4jLogger.fromName[F](lambdaName)).map { implicit logger =>
+        Kleisli { implicit env: LambdaEnv[F, RabbitMQConfig] =>
+          TracedLambda(ep) { span =>
+            LambdaHandler(
+              kms.mapK(Kleisli.liftK[F, Span[F]]).withTracing,
+              NatchezMiddleware.client(http.translate(Kleisli.liftK[F, Span[F]])(Kleisli.applyK(span)))
+            ).run(span)
           }
-          .map(LambdaHandler(_))
+        }.run
       }
+    }
 
-  override def run: Resource[IO, lambda.Lambda[IO, RabbitMQConfig, INothing]] =
-    XRayTracedLambda(handler[Kleisli[IO, Span[IO], *]])
-
+  override def handler: Resource[IO, LambdaEnv[IO, RabbitMQConfig] => IO[Option[INothing]]] =
+    handlerF[IO]
 }
 
 object LambdaHandler {
-  def apply[F[_] : Monad](alg: LambdaHandlerAlg[F]): lambda.Lambda[F, RabbitMQConfig, INothing] =
-    (event: RabbitMQConfig, _: Context[F]) =>
-      for {
-        topology <- alg.fetchTopology(event)
-        _ <- alg.printJson(topology)
-      } yield none
+  @nowarn("msg=dead code following this construct")
+  implicit val nothingEncoder: Encoder[INothing] = _ => ???
+
+  def apply[F[_] : Concurrent : Logger : Trace](kms: KmsAlg[F],
+                                                http: Client[F])
+                                               (implicit env: LambdaEnv[F, RabbitMQConfig]): F[Option[INothing]] =
+    for {
+      event <- env.event
+      alg = LambdaHandlerAlg(kms, http)
+      topology <- alg.fetchTopology(event)
+      _ <- alg.printJson(topology)
+    } yield none
+}
+
+import cats.effect.kernel.MonadCancelThrow
+import cats.syntax.all._
+import feral.lambda.LambdaEnv
+import natchez.EntryPoint
+import natchez.Span
+
+object TracedLambda {
+  def apply[F[_] : MonadCancelThrow, Event, Result](entryPoint: EntryPoint[F])
+                                                   (lambda: Span[F] => F[Option[Result]])
+                                                   (implicit
+                                                    env: LambdaEnv[F, Event],
+                                                    KS: KernelSource[Event]): F[Option[Result]] =
+    for {
+      event <- env.event
+      context <- env.context
+      kernel = KernelSource[Event].extract(event)
+      result <- entryPoint.continueOrElseRoot(context.functionName, kernel).use { span =>
+        span.put(
+          AwsTags.arn(context.invokedFunctionArn),
+          AwsTags.requestId(context.awsRequestId)
+        ) >> lambda(span)
+      }
+    } yield result
 }

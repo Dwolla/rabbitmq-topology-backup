@@ -22,7 +22,7 @@ object LambdaHandlerAlg {
   implicit val LambdaHandlerAlgInstrument: Instrument[LambdaHandlerAlg] = Derive.instrument
   implicit val LambdaHandlerAlgFunctorK: FunctorK[LambdaHandlerAlg] = Derive.functorK
 
-  def apply[F[_] : Async : Logger : Trace](kmsAlg: KmsAlg[F], httpClient: Client[F]): LambdaHandlerAlg[F] =
+  def apply[F[_] : Concurrent : Logger : Trace](kmsAlg: KmsAlg[F], httpClient: Client[F]): LambdaHandlerAlg[F] =
     new LambdaHandlerAlg[F] {
       override def fetchTopology(input: RabbitMQConfig): F[RabbitMqTopology] =
         for {
