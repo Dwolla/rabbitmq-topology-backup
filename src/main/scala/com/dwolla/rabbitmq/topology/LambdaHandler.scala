@@ -17,13 +17,13 @@ import fs2.INothing
 import io.circe.Encoder
 import natchez._
 import natchez.http4s.NatchezMiddleware
-import natchez.xray.XRay
 import org.http4s.client.{Client, middleware}
 import org.http4s.ember.client._
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 import scala.annotation.nowarn
+import natchez.noop.NoopEntrypoint
 
 class LambdaHandler extends IOLambda[RabbitMQConfig, INothing] {
   val lambdaName = "RabbitMQ-Topology-Backup"
@@ -40,26 +40,27 @@ class LambdaHandler extends IOLambda[RabbitMQConfig, INothing] {
       .map(middleware.Logger[F](logHeaders = true, logBody = false))
 
   private def resources[F[_] : Async] =
-    Resource.eval(Random.scalaUtilRandom[F]).flatMap { implicit random =>
-      (XRay.entryPoint[F](), KmsAlg.resource[F], httpClient[F]).tupled
+    Resource.eval(Random.scalaUtilRandom[F]).flatMap { _ =>
+      (
+        Resource.pure[F, EntryPoint[F]](NoopEntrypoint[F]()),
+        KmsAlg.resource[F],
+        httpClient[F],
+        Resource.eval(Slf4jLogger.fromName[F](lambdaName))
+      ).tupled
     }
 
-  private def handlerF[F[_] : Async]: Resource[F, LambdaEnv[F, RabbitMQConfig] => F[Option[INothing]]] =
-    resources[F].flatMap { case (ep, kms, http) =>
-      Resource.eval(Slf4jLogger.fromName[F](lambdaName)).map { implicit logger =>
-        Kleisli { implicit env: LambdaEnv[F, RabbitMQConfig] =>
-          TracedLambda(ep) { span =>
-            LambdaHandler(
-              kms.mapK(Kleisli.liftK[F, Span[F]]).withTracing,
-              NatchezMiddleware.client(http.translate(Kleisli.liftK[F, Span[F]])(Kleisli.applyK(span)))
-            ).run(span)
-          }
-        }.run
-      }
+  private def handlerF[F[_] : Async : Logger : LambdaEnv[*[_], RabbitMQConfig]](ep: EntryPoint[F], kms: KmsAlg[F], http: Client[F]): F[Option[INothing]] =
+    TracedLambda(ep) { span =>
+      LambdaHandler(
+        kms.mapK(Kleisli.liftK[F, Span[F]]).withTracing,
+        NatchezMiddleware.client(http.translate(Kleisli.liftK[F, Span[F]])(Kleisli.applyK(span)))
+      ).run(span)
     }
 
-  override def handler: Resource[IO, LambdaEnv[IO, RabbitMQConfig] => IO[Option[INothing]]] =
-    handlerF[IO]
+  override def handler = resources[IO].map { case (ep, kms, http, logger) => implicit env => 
+    implicit val l = logger
+    handlerF(ep, kms, http)
+  }
 }
 
 object LambdaHandler {
