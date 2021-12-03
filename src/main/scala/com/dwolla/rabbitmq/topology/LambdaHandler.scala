@@ -1,10 +1,7 @@
 package com.dwolla.rabbitmq.topology
 
-import cats.Functor
-import cats.data.Kleisli
 import cats.effect.{Trace => _, _}
 import cats.syntax.all._
-import cats.tagless.FunctorK.ops.toAllFunctorKOps
 import com.dwolla.aws.kms.KmsAlg
 import com.dwolla.rabbitmq.topology.LambdaHandler.nothingEncoder
 import com.dwolla.rabbitmq.topology.model._
