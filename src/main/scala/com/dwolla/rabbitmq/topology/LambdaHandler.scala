@@ -27,11 +27,6 @@ import natchez.noop.NoopEntrypoint
 class LambdaHandler extends IOLambda[RabbitMQConfig, INothing] {
   val lambdaName = "RabbitMQ-Topology-Backup"
 
-  private implicit def kleisliLogger[F[_] : Logger, A]: Logger[Kleisli[F, A, *]] = Logger[F].mapK(Kleisli.liftK)
-
-  private implicit def kleisliLambdaEnv[F[_] : Functor, A, B](implicit env: LambdaEnv[F, A]): LambdaEnv[Kleisli[F, B, *], A] =
-    env.mapK(Kleisli.liftK)
-
   private def httpClient[F[_] : Async]: Resource[F, Client[F]] =
     EmberClientBuilder
       .default[F]
@@ -47,10 +42,9 @@ class LambdaHandler extends IOLambda[RabbitMQConfig, INothing] {
     implicit val l = logger
 
     TracedLambda(ep) { span =>
-      LambdaHandler(
-        kms.mapK(Kleisli.liftK[IO, Span[IO]]).withTracing,
-        NatchezMiddleware.client(http.translate(Kleisli.liftK[IO, Span[IO]])(Kleisli.applyK(span)))
-      ).run(span)
+      Trace.ioTrace(span).flatMap { implicit trace =>
+        LambdaHandler(kms.withTracing, NatchezMiddleware.client(http))
+      }
     }
   }
     
