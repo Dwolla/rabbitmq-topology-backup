@@ -2,7 +2,6 @@ package com.dwolla.rabbitmq.topology
 
 import cats.Functor
 import cats.data.Kleisli
-import cats.effect.std.Random
 import cats.effect.{Trace => _, _}
 import cats.syntax.all._
 import cats.tagless.FunctorK.ops.toAllFunctorKOps
@@ -39,28 +38,22 @@ class LambdaHandler extends IOLambda[RabbitMQConfig, INothing] {
       .build
       .map(middleware.Logger[F](logHeaders = true, logBody = false))
 
-  private def resources[F[_] : Async] =
-    Resource.eval(Random.scalaUtilRandom[F]).flatMap { _ =>
-      (
-        Resource.pure[F, EntryPoint[F]](NoopEntrypoint[F]()),
-        KmsAlg.resource[F],
-        httpClient[F],
-        Resource.eval(Slf4jLogger.fromName[F](lambdaName))
-      ).tupled
-    }
+  override def handler = for {
+    ep <- Resource.pure(NoopEntrypoint[IO]())
+    kms <- KmsAlg.resource[IO]
+    http <- httpClient[IO]
+    logger <- Resource.eval(Slf4jLogger.fromName[IO](lambdaName))
+  } yield { implicit env =>
+    implicit val l = logger
 
-  private def handlerF[F[_] : Async : Logger : LambdaEnv[*[_], RabbitMQConfig]](ep: EntryPoint[F], kms: KmsAlg[F], http: Client[F]): F[Option[INothing]] =
     TracedLambda(ep) { span =>
       LambdaHandler(
-        kms.mapK(Kleisli.liftK[F, Span[F]]).withTracing,
-        NatchezMiddleware.client(http.translate(Kleisli.liftK[F, Span[F]])(Kleisli.applyK(span)))
+        kms.mapK(Kleisli.liftK[IO, Span[IO]]).withTracing,
+        NatchezMiddleware.client(http.translate(Kleisli.liftK[IO, Span[IO]])(Kleisli.applyK(span)))
       ).run(span)
     }
-
-  override def handler = resources[IO].map { case (ep, kms, http, logger) => implicit env => 
-    implicit val l = logger
-    handlerF(ep, kms, http)
   }
+    
 }
 
 object LambdaHandler {
