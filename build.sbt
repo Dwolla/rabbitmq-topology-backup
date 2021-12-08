@@ -21,7 +21,7 @@ lazy val `rabbitmq-topology-backup` = (project in file("."))
       val natchezVersion = "0.1.5"
       val fs2Version = "3.2.2"
       Seq(
-        "software.amazon.awssdk" % "kms" % "2.17.94",
+        "software.amazon.awssdk" % "kms" % "2.17.98",
         "com.armanbilge" %% "feral-lambda" % "0.1-6b05f5a",
         "org.http4s" %% "http4s-ember-client" % http4sVersion,
         "org.http4s" %% "http4s-circe" % http4sVersion,
