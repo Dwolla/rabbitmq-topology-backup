@@ -16,7 +16,7 @@ lazy val `rabbitmq-topology-backup` = (project in file("."))
   .settings(
     maintainer := developers.value.headOption.map(dev => s"${dev.name} <${dev.email}>").getOrElse("No developers are set on the project"),
     libraryDependencies ++= {
-      val http4sVersion = "0.23.6"
+      val http4sVersion = "0.23.7"
       val circeVersion = "0.14.1"
       val natchezVersion = "0.1.5"
       val fs2Version = "3.2.3"
