@@ -18,10 +18,10 @@ lazy val `rabbitmq-topology-backup` = (project in file("."))
     libraryDependencies ++= {
       val http4sVersion = "0.23.7"
       val circeVersion = "0.14.1"
-      val natchezVersion = "0.1.5"
+      val natchezVersion = "0.1.6"
       val fs2Version = "3.2.3"
       Seq(
-        "software.amazon.awssdk" % "kms" % "2.17.99",
+        "software.amazon.awssdk" % "kms" % "2.17.100",
         "com.armanbilge" %% "feral-lambda" % "0.1-6b05f5a",
         "org.http4s" %% "http4s-ember-client" % http4sVersion,
         "org.http4s" %% "http4s-circe" % http4sVersion,
@@ -35,8 +35,8 @@ lazy val `rabbitmq-topology-backup` = (project in file("."))
         "com.chuusai" %% "shapeless" % "2.3.7",
         "org.tpolecat" %% "natchez-http4s" % "0.2.0",
         "org.typelevel" %% "log4cats-slf4j" % "2.1.1",
-        "org.apache.logging.log4j" % "log4j-slf4j-impl" % "2.17.0" % Runtime,
-        "com.amazonaws" % "aws-lambda-java-log4j2" % "1.3.0" % Runtime,
+        "org.apache.logging.log4j" % "log4j-slf4j-impl" % "2.16.0" % Runtime,
+        "com.amazonaws" % "aws-lambda-java-log4j2" % "1.5.0" % Runtime,
         "org.typelevel" %% "munit-cats-effect-3" % "1.0.7" % Test,
         "com.eed3si9n.expecty" %% "expecty" % "0.15.4" % Test,
         "org.http4s" %% "http4s-server" % http4sVersion % Test,
