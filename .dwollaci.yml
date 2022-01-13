@@ -11,33 +11,12 @@ stages:
   deployDevInt:
     nodeLabel: nvm-deployer
     steps:
-      - |
-        . ${NVM_DIR}/nvm.sh --no-use
-        nvm install
-        npm install -g npm
-        npm install -g serverless
-        serverless deploy \
-          --region us-west-2 \
-          --stage devint
+      - ./deploy.sh devint
   deployUat:
     nodeLabel: nvm-deployer
     steps:
-      - |
-        . ${NVM_DIR}/nvm.sh --no-use
-        nvm install
-        npm install -g npm
-        npm install -g serverless
-        serverless deploy \
-          --region us-west-2 \
-          --stage uat
+      - ./deploy.sh uat
   deployProd:
     nodeLabel: nvm-deployer
     steps:
-      - |
-        . ${NVM_DIR}/nvm.sh --no-use
-        nvm install
-        npm install -g npm
-        npm install -g serverless
-        serverless deploy \
-          --region us-west-2 \
-          --stage prod
+      - ./deploy.sh prod
