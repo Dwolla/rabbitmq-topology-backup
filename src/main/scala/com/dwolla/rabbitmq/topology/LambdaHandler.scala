@@ -9,7 +9,7 @@ import com.dwolla.rabbitmq.topology.model._
 import com.dwolla.tracing._
 import feral.lambda._
 import natchez._
-import natchez.xray.XRay
+import natchez.xray.{XRay, XRayEnvironment}
 import org.http4s.client.{Client, middleware}
 import org.http4s.ember.client._
 import org.typelevel.log4cats.Logger
@@ -30,7 +30,10 @@ class LambdaHandler extends IOLambda[RabbitMQConfig, INothing] {
     for {
       implicit0(logger: Logger[F]) <- Resource.eval(Slf4jLogger.fromName[F]("RabbitMQ-Topology-Backup"))
       implicit0(random: Random[F]) <- Resource.eval(Random.scalaUtilRandom[F])
-      ep <- XRay.entryPoint[F]()
+      ep <- XRayEnvironment[Resource[F, *]].daemonAddress.flatMap {
+        case Some(addr) => XRay.entryPoint(addr)
+        case None => XRay.entryPoint[F]()
+      }
       kms <- KmsAlg.resource[F]
       http <- httpClient[F]
     } yield { implicit env =>
