@@ -3,7 +3,7 @@ ThisBuild / homepage := Some(url("https://github.com/Dwolla/rabbitmq-topology-ba
 ThisBuild / description := "Connect to the RabbitMQ API and download the current exchange/queue topology"
 ThisBuild / licenses += ("MIT", url("http://opensource.org/licenses/MIT"))
 ThisBuild / startYear := Option(2019)
-ThisBuild / scalaVersion := "2.13.7"
+ThisBuild / scalaVersion := "2.13.8"
 ThisBuild / githubWorkflowJavaVersions := Seq(JavaSpec.temurin("11"), JavaSpec.temurin("8"))
 ThisBuild / githubWorkflowBuild := Seq(WorkflowStep.Sbt(List("test", "Universal / packageBin"), name = Option("Build, Test, and Package")))
 ThisBuild / githubWorkflowPublishTargetBranches := Nil
