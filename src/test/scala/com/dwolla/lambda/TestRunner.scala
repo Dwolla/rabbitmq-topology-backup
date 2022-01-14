@@ -13,23 +13,23 @@ object TestRunner extends App {
   val input: InputStream = new ByteArrayInputStream(
 //             "baseUri": "http://localhost:15672",
     json"""{
-             "baseUri": "http://rabbit.us-west-2.devint.dwolla.net:15672",
+             "baseUri": "https://google.com",
              "username": "guest",
              "password": "AQICAHh38+DAqADvcRLU4+t2AYhr82YbZuuFQdjdX95NTppHhwHd8XtgUIF6t8gP+mKlCrizAAAAYzBhBgkqhkiG9w0BBwagVDBSAgEAME0GCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMuvCOEA4D/QGIaihbAgEQgCATYPnSoUh0UI+QsqlR00kP7cGLdyh6fUrfBv7Gzt8ToA=="
            }""".noSpaces.getBytes)
   val badInput: InputStream = new ByteArrayInputStream("{Bad input".getBytes)
   val output: ByteArrayOutputStream = new ByteArrayOutputStream()
 
-  new LambdaHandler().handleRequest(input, output, new EmptyContext)
+  new LambdaHandler().handleRequest(input, output, new EmptyContext("test-runner"))
 
   logger.info("{}", output.size())
 }
 
-class EmptyContext extends Context {
+class EmptyContext(functionName: String) extends Context {
   override def getAwsRequestId: String = ""
   override def getLogGroupName: String = null
   override def getLogStreamName: String = null
-  override def getFunctionName: String = ""
+  override def getFunctionName: String = functionName
   override def getFunctionVersion: String = ""
   override def getInvokedFunctionArn: String = ""
   override def getIdentity: CognitoIdentity = null
