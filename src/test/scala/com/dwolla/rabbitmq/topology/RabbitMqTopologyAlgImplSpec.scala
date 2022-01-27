@@ -1,6 +1,5 @@
 package com.dwolla.rabbitmq.topology
 
-import cats.Applicative
 import cats.data._
 import cats.effect._
 import com.dwolla.rabbitmq.topology.RabbitMqTopologyAlg.RabbitMqTopologyAlgImpl
@@ -19,6 +18,7 @@ import org.http4s.server.middleware.VirtualHost
 import org.http4s.server.middleware.VirtualHost.exact
 import org.http4s.syntax.all._
 import org.typelevel.log4cats.Logger
+import org.typelevel.log4cats.noop.NoOpLogger
 
 class RabbitMqTopologyAlgImplSpec extends CatsEffectSuite with Http4sDsl[IO] {
   import FakeRabbitMqService._
@@ -115,21 +115,4 @@ object FakeRabbitMqService extends Http4sDsl[IO] {
   def client(service: AuthedRoutes[String, IO]): Client[IO] =
     Client.fromHttpApp[IO](VirtualHost(exact(middleware(service).orNotFound, correctHostname)))
 
-}
-
-class NoOpLogger[F[_] : Applicative] extends Logger[F] {
-  override def error(message: => String): F[Unit] = Applicative[F].unit
-  override def warn(message: => String): F[Unit] = Applicative[F].unit
-  override def info(message: => String): F[Unit] = Applicative[F].unit
-  override def debug(message: => String): F[Unit] = Applicative[F].unit
-  override def trace(message: => String): F[Unit] = Applicative[F].unit
-  override def error(t: Throwable)(message: => String): F[Unit] = Applicative[F].unit
-  override def warn(t: Throwable)(message: => String): F[Unit] = Applicative[F].unit
-  override def info(t: Throwable)(message: => String): F[Unit] = Applicative[F].unit
-  override def debug(t: Throwable)(message: => String): F[Unit] = Applicative[F].unit
-  override def trace(t: Throwable)(message: => String): F[Unit] = Applicative[F].unit
-}
-
-object NoOpLogger {
-  def apply[F[_] : Applicative] = new NoOpLogger[F]
 }

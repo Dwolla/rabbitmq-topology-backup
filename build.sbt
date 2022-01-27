@@ -21,6 +21,8 @@ lazy val `rabbitmq-topology-backup` = (project in file("."))
       val natchezVersion = "0.1.6"
       val feralVersion = "0.1.0-M4"
       val fs2Version = "3.2.3"
+      val log4CatsVersion = "2.2.0"
+
       Seq(
         "org.typelevel" %% "feral-lambda" % feralVersion,
         "org.http4s" %% "http4s-ember-client" % http4sVersion,
@@ -35,7 +37,7 @@ lazy val `rabbitmq-topology-backup` = (project in file("."))
         "io.circe" %% "circe-generic" % circeVersion,
         "com.chuusai" %% "shapeless" % "2.3.7",
         "org.tpolecat" %% "natchez-http4s" % "0.3.2",
-        "org.typelevel" %% "log4cats-slf4j" % "2.2.0",
+        "org.typelevel" %% "log4cats-slf4j" % log4CatsVersion,
         "com.dwolla" %% "fs2-aws-java-sdk2" % "3.0.0-RC1",
         "org.apache.logging.log4j" % "log4j-slf4j-impl" % "2.17.1" % Runtime,
         "com.amazonaws" % "aws-lambda-java-log4j2" % "1.5.1" % Runtime,
@@ -45,6 +47,7 @@ lazy val `rabbitmq-topology-backup` = (project in file("."))
         "org.http4s" %% "http4s-server" % http4sVersion % Test,
         "io.circe" %% "circe-literal" % circeVersion % Test,
         "io.circe" %% "circe-parser" % circeVersion % Test,
+        "org.typelevel" %% "log4cats-noop" % log4CatsVersion,
       )
     },
     addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.13.2" cross CrossVersion.full),
