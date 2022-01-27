@@ -16,8 +16,6 @@ import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 class LambdaHandler extends IOLambda[RabbitMQConfig, INothing] {
-  private implicit def kleisliLogger[F[_] : Logger, A]: Logger[Kleisli[F, A, *]] = Logger[F].mapK(Kleisli.liftK)
-
   private implicit def xrayKernelSource[Event]: KernelSource[Event] = KernelSource.emptyKernelSource
 
   private def httpClient[F[_] : Async]: Resource[F, Client[F]] =
