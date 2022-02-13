@@ -35,7 +35,7 @@ lazy val `rabbitmq-topology-backup` = (project in file("."))
         "org.typelevel" %% "cats-tagless-macros" % "0.14.0",
         "com.comcast" %% "ip4s-core" % "3.1.2",
         "io.circe" %% "circe-generic" % circeVersion,
-        "com.chuusai" %% "shapeless" % "2.3.7",
+        "com.chuusai" %% "shapeless" % "2.3.8",
         "org.tpolecat" %% "natchez-http4s" % "0.3.2",
         "org.typelevel" %% "log4cats-slf4j" % log4CatsVersion,
         "com.dwolla" %% "fs2-aws-java-sdk2" % "3.0.0-RC1",
