@@ -20,7 +20,7 @@ lazy val `rabbitmq-topology-backup` = (project in file("."))
       val circeVersion = "0.14.1"
       val natchezVersion = "0.1.6"
       val feralVersion = "0.1.0-M5"
-      val fs2Version = "3.2.3"
+      val fs2Version = "3.2.5"
       val log4CatsVersion = "2.2.0"
 
       Seq(
