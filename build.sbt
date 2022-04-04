@@ -20,7 +20,7 @@ lazy val `rabbitmq-topology-backup` = (project in file("."))
       val circeVersion = "0.14.1"
       val natchezVersion = "0.1.6"
       val feralVersion = "0.1.0-M5"
-      val fs2Version = "3.2.3"
+      val fs2Version = "3.2.7"
       val log4CatsVersion = "2.2.0"
 
       Seq(
@@ -41,7 +41,7 @@ lazy val `rabbitmq-topology-backup` = (project in file("."))
         "com.dwolla" %% "fs2-aws-java-sdk2" % "3.0.0-RC1",
         "org.apache.logging.log4j" % "log4j-slf4j-impl" % "2.17.1" % Runtime,
         "com.amazonaws" % "aws-lambda-java-log4j2" % "1.5.1" % Runtime,
-        "software.amazon.awssdk" % "kms" % "2.17.120" % Runtime,
+        "software.amazon.awssdk" % "kms" % "2.17.162" % Runtime,
         "org.typelevel" %% "munit-cats-effect-3" % "1.0.7" % Test,
         "com.eed3si9n.expecty" %% "expecty" % "0.15.4" % Test,
         "org.http4s" %% "http4s-server" % http4sVersion % Test,
