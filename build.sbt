@@ -16,7 +16,7 @@ lazy val `rabbitmq-topology-backup` = (project in file("."))
   .settings(
     maintainer := developers.value.headOption.map(dev => s"${dev.name} <${dev.email}>").getOrElse("No developers are set on the project"),
     libraryDependencies ++= {
-      val http4sVersion = "0.23.8"
+      val http4sVersion = "0.23.11"
       val circeVersion = "0.14.1"
       val natchezVersion = "0.1.6"
       val feralVersion = "0.1.0-M5"
@@ -35,7 +35,7 @@ lazy val `rabbitmq-topology-backup` = (project in file("."))
         "org.typelevel" %% "cats-tagless-macros" % "0.14.0",
         "com.comcast" %% "ip4s-core" % "3.1.2",
         "io.circe" %% "circe-generic" % circeVersion,
-        "com.chuusai" %% "shapeless" % "2.3.7",
+        "com.chuusai" %% "shapeless" % "2.3.9",
         "org.tpolecat" %% "natchez-http4s" % "0.3.2",
         "org.typelevel" %% "log4cats-slf4j" % log4CatsVersion,
         "com.dwolla" %% "fs2-aws-java-sdk2" % "3.0.0-RC1",
