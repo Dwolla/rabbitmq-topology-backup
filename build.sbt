@@ -43,7 +43,7 @@ lazy val `rabbitmq-topology-backup` = (project in file("."))
         "com.amazonaws" % "aws-lambda-java-log4j2" % "1.5.1" % Runtime,
         "software.amazon.awssdk" % "kms" % "2.17.255" % Runtime,
         "org.typelevel" %% "munit-cats-effect-3" % "1.0.7" % Test,
-        "com.eed3si9n.expecty" %% "expecty" % "0.15.4" % Test,
+        "com.eed3si9n.expecty" %% "expecty" % "0.16.0" % Test,
         "org.http4s" %% "http4s-server" % http4sVersion % Test,
         "io.circe" %% "circe-literal" % circeVersion % Test,
         "io.circe" %% "circe-parser" % circeVersion % Test,
