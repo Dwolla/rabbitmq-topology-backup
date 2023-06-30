@@ -38,7 +38,7 @@ lazy val `rabbitmq-topology-backup` = (project in file("."))
         "com.chuusai" %% "shapeless" % "2.3.9",
         "org.tpolecat" %% "natchez-http4s" % "0.3.2",
         "org.typelevel" %% "log4cats-slf4j" % log4CatsVersion,
-        "com.dwolla" %% "fs2-aws-java-sdk2" % "3.0.0-RC1",
+        "com.dwolla" %% "fs2-aws-java-sdk2" % "3.0.0-RC2",
         "org.apache.logging.log4j" % "log4j-slf4j-impl" % "2.17.2" % Runtime,
         "com.amazonaws" % "aws-lambda-java-log4j2" % "1.5.1" % Runtime,
         "software.amazon.awssdk" % "kms" % "2.17.255" % Runtime,
