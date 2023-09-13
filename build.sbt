@@ -21,7 +21,7 @@ lazy val `rabbitmq-topology-backup` = (project in file("."))
       val natchezVersion = "0.1.6"
       val feralVersion = "0.1.0-M9"
       val fs2Version = "3.2.7"
-      val log4CatsVersion = "2.3.1"
+      val log4CatsVersion = "2.3.2"
 
       Seq(
         "org.typelevel" %% "feral-lambda" % feralVersion,
