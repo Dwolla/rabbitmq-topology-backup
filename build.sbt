@@ -50,7 +50,7 @@ lazy val `rabbitmq-topology-backup` = (project in file("."))
         "org.typelevel" %% "log4cats-noop" % log4CatsVersion,
       )
     },
-    addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.13.2" cross CrossVersion.full),
+    addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.13.3" cross CrossVersion.full),
     addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1"),
     Compile / packageDoc / mappings := Seq(),
     Compile / packageDoc / publishArtifact := false,
